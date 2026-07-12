@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D T-Rex: Volcanic Runner</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #535353;
+            --primary-glow: rgba(83, 83, 83, 0.15);
+            --secondary: #747474;
+            --secondary-glow: rgba(116, 116, 116, 0.1);
+            --bg-dark: #f7f7f7;
+            --glass-bg: #f7f7f7;
+            --glass-border: #535353;
+            --glass-border-glow: transparent;
+            --text-light: #535353;
+            --text-muted: #838383;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-light);
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- UI OVERLAYS (Flat Retro Chrome Dino Page) --- */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(247, 247, 247, 0.85); /* Clean flat light overlay */
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 3px solid var(--glass-border);
+            border-radius: 0px; /* Sharp retro corners */
+            padding: 30px 20px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 6px 6px 0px var(--glass-border); /* Flat retro shadow */
+            transform: translateY(0);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .overlay.hidden .glass-panel {
+            transform: translateY(15px);
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-weight: 400;
+            font-size: 16px;
+            margin: 0 0 16px 0;
+            color: var(--text-light);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-muted);
+            font-size: 8px;
+            margin-bottom: 25px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            background: var(--primary);
+            border: 2px solid var(--primary);
+            color: #f7f7f7;
+            padding: 12px 28px;
+            font-size: 8px;
+            font-weight: 400;
+            border-radius: 0px; /* Sharp corners */
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Press Start 2P', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            outline: none;
+            box-shadow: 3px 3px 0px var(--secondary);
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            background: var(--bg-dark);
+            color: var(--primary);
+            box-shadow: 5px 5px 0px var(--primary);
+        }
+
+        .btn:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px var(--primary);
+        }
+
+        /* --- LOADING SCREEN --- */
+        #loading-screen {
+            background: var(--bg-dark);
+            z-index: 100;
+        }
+
+        .loader-container {
+            width: 100%;
+            max-width: 240px;
+            margin: 20px auto 10px auto;
+        }
+
+        .loader-track {
+            height: 8px;
+            width: 100%;
+            background: #e0e0e0;
+            border: 2px solid var(--primary);
+            border-radius: 0px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loader-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            border-radius: 0px;
+            transition: width 0.1s ease;
+        }
+
+        #loading-text {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* --- CLASSIC PIXEL HUD --- */
+        #hud {
+            position: absolute;
+            top: 30px;
+            left: 0;
+            width: 100%;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 14px;
+            color: var(--text-light);
+            letter-spacing: 1px;
+            text-shadow: none;
+        }
+
+        #hud.visible {
+            opacity: 1;
+        }
+
+        .hud-left {
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .hud-right {
+            display: flex;
+            gap: 24px;
+            pointer-events: auto;
+        }
+
+        /* --- STATS PANEL --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #f7f7f7;
+            border: 2px solid var(--primary);
+            border-radius: 0px;
+            padding: 12px;
+        }
+
+        .stat-card .val {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-light);
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .stat-card .lbl {
+            font-size: 7px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 6px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* --- CONTROLS OVERLAY ON SCREEN --- */
+        .controls-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 7px;
+            color: var(--text-muted);
+            font-family: 'Press Start 2P', monospace;
+            line-height: 1.6;
+        }
+
+        .control-key {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .key-cap {
+            background: var(--bg-dark);
+            border: 2px solid var(--primary);
+            color: var(--text-light);
+            padding: 3px 7px;
+            border-radius: 0px;
+            font-weight: 400;
+            font-size: 6px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* --- GAME OVER RETRY BUTTON --- */
+        .btn-retry {
+            width: 64px;
+            height: 64px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            transition: transform 0.2s ease;
+            margin: 20px auto 0 auto;
+            outline: none;
+        }
+
+        .btn-retry:hover {
+            transform: scale(1.2) rotate(45deg);
+        }
+
+        .btn-retry:active {
+            transform: scale(0.9);
+        }
+
+        .btn-retry svg {
+            width: 38px;
+            height: 38px;
+            fill: currentColor;
+        }
+
+        /* --- MOBILE CONTROLS --- */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            padding: 0 30px;
+            display: none;
+            justify-content: center;
+            gap: 15px;
+            z-index: 5;
+        }
+
+        .mobile-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 0px;
+            background: var(--bg-dark);
+            border: 2px solid var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 3px 3px 0px var(--secondary);
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+
+        .mobile-btn:active {
+            background: var(--primary);
+            color: #f7f7f7;
+            box-shadow: none;
+            transform: translate(1px, 1px);
+        }
+
+        /* --- SETTINGS DROPDOWN --- */
+        #settings-dropdown {
+            background: var(--bg-dark) !important;
+            border: 2px solid var(--primary) !important;
+            border-radius: 0px !important;
+            box-shadow: 4px 4px 0px var(--primary) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+
+        .icon-btn {
+            background: transparent !important;
+            border: none !important;
+            color: var(--primary) !important;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-toggle {
+            background: var(--bg-dark) !important;
+            border: 2px solid var(--primary) !important;
+            color: var(--primary) !important;
+            font-weight: 400 !important;
+            font-size: 6px !important;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 5px 10px !important;
+            border-radius: 0px !important;
+            transition: all 0.15s ease !important;
+            font-family: 'Press Start 2P', monospace !important;
+            box-shadow: 2px 2px 0px var(--secondary);
+        }
+
+        .btn-toggle.active {
+            background: var(--primary) !important;
+            color: #f7f7f7 !important;
+            box-shadow: none !important;
+            transform: translate(1px, 1px);
+        }
+
+        /* --- AUDIO TOGGLE --- */
+        .top-buttons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 15;
+        }
+
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+            h1 {
+                font-size: 14px;
+            }
+            .glass-panel {
+                padding: 20px 15px;
+            }
+            #hud {
+                padding: 0 20px !important;
+                font-size: 10px !important;
+                top: 15px !important;
+            }
+            .top-buttons {
+                top: 10px !important;
+                left: 10px !important;
+            }
+            #settings-dropdown {
+                top: 45px !important;
+                left: 0 !important;
+                width: 200px !important;
+            }
+            .icon-btn {
+                width: 36px !important;
+                height: 36px !important;
+            }
+            .mobile-btn {
+                width: 55px !important;
+                height: 55px !important;
+                font-size: 0.95rem !important;
+            }
+        }
+
+        /* --- SPEED VIGNETTE (motion sensation at high velocity) --- */
+        #speed-vignette {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 8;
+            pointer-events: none;
+            opacity: 0;
+            background: radial-gradient(ellipse at center, rgba(247,247,247,0) 55%, rgba(60,50,45,0.2) 100%);
+            transition: opacity 0.4s ease;
+        }
+
+        /* --- FILM GRAIN (Cinematic Projector Jitter) --- */
+        #film-grain {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: calc(100% + 10px);
+            height: calc(100% + 10px);
+            z-index: 9;
+            pointer-events: none;
+            opacity: 0.035; /* Finer, subtle cinematic opacity */
+            background-repeat: repeat;
+            animation: grain-jitter 0.12s steps(6) infinite;
+        }
+
+        @keyframes grain-jitter {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-0.5px, 0.5px); }
+            20% { transform: translate(0.5px, -0.5px); }
+            30% { transform: translate(-0.5px, -0.5px); }
+            40% { transform: translate(0.5px, 0.5px); }
+            50% { transform: translate(-0.5px, 1px); }
+            60% { transform: translate(0.5px, -0.5px); }
+            70% { transform: translate(-1px, -0.5px); }
+            80% { transform: translate(1px, 0.5px); }
+            90% { transform: translate(-0.5px, -0.5px); }
+        }
+
+        /* --- MILESTONE POPUP --- */
+        #milestone-popup {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: var(--bg-dark);
+            border: 3px solid var(--primary);
+            border-radius: 0px;
+            padding: 15px 30px;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+            box-shadow: 6px 6px 0px var(--primary);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.35);
+            opacity: 0;
+        }
+
+        #milestone-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        #milestone-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            text-shadow: none;
+        }
+
+        #milestone-value {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: bold;
+            text-shadow: none;
+        }
+
+        /* --- ROTATE DEVICE OVERLAY FOR PORTRAIT MOBILE --- */
+        #rotate-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #f7f7f7;
+            color: #535353;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        @keyframes rotate-phone {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @media (max-width: 768px) and (orientation: portrait) {
+            #rotate-overlay {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Rotate Warning Overlay -->
+    <div id="rotate-overlay">
+        <svg viewBox="0 0 24 24" style="width: 50px; height: 50px; fill: #535353; margin-bottom: 25px; animation: rotate-phone 2s infinite ease-in-out;">
+            <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3-3H7V4h10v14z"/>
+        </svg>
+        <div style="font-size: 8px; line-height: 1.8; letter-spacing: 1px; text-transform: uppercase;">Please Rotate<br>Your Device</div>
+    </div>
+
+    <!-- Film Grain Overlay for Cinematic Film feel -->
+    <div id="film-grain"></div>
+
+    <!-- Milestone Alert Popup -->
+    <div id="milestone-popup" class="hidden">
+        <div id="milestone-title">MILESTONE!</div>
+        <div id="milestone-value">+100 PTS</div>
+    </div>
+
+    <!-- Canvas for Three.js -->
+    <div id="canvas-container"></div>
+    <div id="speed-vignette"></div>
+
+    <!-- Settings Button and Floating Panel (Top Left) -->
+    <div class="top-buttons">
+        <button id="btn-settings" class="icon-btn" title="Settings">
+            <svg viewBox="0 0 24 24" style="width:22px; height:22px; fill:currentColor;">
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.13,5.91,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            </svg>
+        </button>
+        
+        <!-- Settings Dropdown Panel (hidden by default) -->
+        <div id="settings-dropdown" class="glass-panel hidden" style="position: absolute; top: 55px; left: 0; width: 220px; padding: 15px; text-align: left; z-index: 20; display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 2px solid var(--primary); padding-bottom: 6px; font-family: 'Press Start 2P', monospace; margin-bottom: 4px;">Settings</div>
+            
+            <!-- Camera View Settings -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Camera:</span>
+                <div style="display: flex; gap: 4px;">
+                    <button id="cam-side" class="btn-toggle active" style="flex: 1; padding: 5px 0;">Side</button>
+                    <button id="cam-follow" class="btn-toggle" style="flex: 1; padding: 5px 0;">3D View</button>
+                </div>
+            </div>
+
+            <!-- Zoom Settings -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Zoom:</span>
+                <div style="display: flex; gap: 4px;">
+                    <button id="zoom-normal" class="btn-toggle" style="flex: 1; padding: 5px 0;">Close</button>
+                    <button id="zoom-wide" class="btn-toggle active" style="flex: 1; padding: 5px 0;">Wide</button>
+                </div>
+            </div>
+            
+            <!-- Scroll Zoom Settings -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Scroll Zoom:</span>
+                <button id="btn-scroll-zoom" class="btn-toggle active" style="padding: 4px 10px;">ON</button>
+            </div>
+            
+            <!-- Audio Settings -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Sound:</span>
+                <button id="btn-audio" class="btn-toggle active" style="padding: 4px 10px;">ON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD (Heads-Up Display) -->
+    <div id="hud">
+        <div class="hud-left">
+            <!-- AMBER removed to match Chrome Dino style -->
+        </div>
+        <div class="hud-right">
+            <span>HI <span id="hud-highscore">00000</span></span>
+            <span id="hud-score">00000</span>
+        </div>
+    </div>
+
+    <!-- Mobile Button Layout (Overlay) -->
+    <div id="mobile-controls">
+        <button id="mobile-left" class="mobile-btn" title="Move Left">←</button>
+        <button id="mobile-jump" class="mobile-btn" title="Jump">↑</button>
+        <button id="mobile-right" class="mobile-btn" title="Move Right">→</button>
+    </div>
+
+    <!-- Screen 1: Loading Screen -->
+    <div id="loading-screen" class="overlay">
+        <div class="glass-panel">
+            <h1>T-REX 3D RUN</h1>
+            <p class="subtitle" style="margin-bottom:15px;">Loading Environment</p>
+            <div class="loader-container">
+                <div class="loader-track">
+                    <div id="loader-progress" class="loader-bar"></div>
+                </div>
+                <div id="loading-text">LOAD STATE... 0%</div>
+            </div>
+            <p style="font-size:6px; color:var(--text-muted); margin-top:20px; line-height:1.5;">
+                Note: Access through local server is required for 3D assets to load correctly.
+            </p>
+        </div>
+    </div>
+
+    <!-- Screen 2: Main Menu -->
+    <div id="menu-screen" class="overlay hidden">
+        <div class="glass-panel">
+            <h1>T-REX 3D RUN</h1>
+            <p class="subtitle">Desert Escape</p>
+            
+            <div class="controls-info">
+                <div class="control-key">
+                    <span class="key-cap">Space</span> or <span class="key-cap">↑</span>
+                    <span>Jump</span>
+                </div>
+                <div class="control-key">
+                    <span class="key-cap">A</span> / <span class="key-cap">D</span> or <span class="key-cap">←</span> / <span class="key-cap">→</span>
+                    <span>Steer Lanes</span>
+                </div>
+            </div>
+            
+            <button id="btn-start" class="btn">START RUN</button>
+        </div>
+    </div>
+
+    <!-- Screen 3: Game Over -->
+    <div id="gameover-screen" class="overlay hidden">
+        <div class="glass-panel">
+            <h1>G A M E   O V E R</h1>
+            <button id="btn-restart" class="btn-retry" title="Retry">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Load Three.js and GLTFLoader from CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        // ==========================================
+        // 1. PROCEDURAL 8-BIT AUDIO SYNTHESIZER
+        // ==========================================
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                return this.enabled;
+            }
+
+            playJump() {
+                if (!this.enabled || !this.ctx) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(550, now + 0.18);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.19);
+            }
+
+            playCollect() {
+                if (!this.enabled || !this.ctx) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            }
+
+            playHit() {
+                if (!this.enabled || !this.ctx) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.linearRampToValueAtTime(30, now + 0.45);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.55);
+            }
+
+            playMilestone() {
+                if (!this.enabled || !this.ctx) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(783.99, now); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.1); // C6
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
+
+        const synth = new SoundSynth();
+        const btnAudio = document.getElementById('btn-audio');
+
+        btnAudio.addEventListener('click', () => {
+            synth.init();
+            const enabled = synth.toggle();
+            if (enabled) {
+                btnAudio.classList.add('active');
+                btnAudio.textContent = 'ON';
+            } else {
+                btnAudio.classList.remove('active');
+                btnAudio.textContent = 'OFF';
+            }
+        });
+
+        window.addEventListener('click', () => {
+            synth.init();
+        }, { once: true });
+
+
+        // ==========================================
+        // 2. ENDLESS RUNNER ENGINE
+        // ==========================================
+        const GAME_STATES = {
+            LOADING: 'loading',
+            MENU: 'menu',
+            RUNNING: 'running',
+            GAMEOVER: 'gameover'
+        };
+
+        const DINO_SCALE = 0.9;
+
+        const config = {
+            laneWidth: 3.2,
+            speedStart: 18,
+            speedMax: 40,
+            speedAcceleration: 0.12,
+            gravity: -58,
+            jumpVelocity: 24,
+            spawnMinDistance: 24,
+            spawnMaxDistance: 38
+        };
+
+        class Game {
+            constructor() {
+                this.state = GAME_STATES.LOADING;
+                this.score = 0;
+                this.highScore = parseInt(localStorage.getItem('trex3d_highscore') || '0', 10);
+                this.amberCount = 0;
+                this.speed = config.speedStart;
+                this.distanceTraveled = 0;
+                this.triggeredMilestones = { 100: false, 500: false, 1000: false, 2000: false, 5000: false, 10000: false };
+                this.highScoreBroken = false;
+
+                // Player state
+                this.currentLane = 0; // -1 = Left, 0 = Center, 1 = Right
+                this.trex = {
+                    mesh: null,
+                    mixer: null,
+                    animations: {},
+                    currentAnim: null,
+                    
+                    x: 0,
+                    targetX: 0,
+                    y: 0,
+                    velocity: 0,
+                    isGrounded: true,
+                    isDucking: false,
+                    boundingBox: new THREE.Box3()
+                };
+
+                // Track entities
+                this.groundTiles = [];
+                this.obstacles = [];
+                this.collectibles = [];
+                this.clouds = [];
+                this.particles = null;
+                this.cactusMeshes = [];
+                this.sandMaterial = null;
+
+                // Spawn timers
+                this.lastObstacleZ = 0;
+
+                // Bind UI
+                this.dom = {
+                    hud: document.getElementById('hud'),
+                    score: document.getElementById('hud-score'),
+                    amber: document.getElementById('amber-val'),
+                    highscore: document.getElementById('hud-highscore'),
+                    loaderProgress: document.getElementById('loader-progress'),
+                    loadingText: document.getElementById('loading-text'),
+                    loadingScreen: document.getElementById('loading-screen'),
+                    menuScreen: document.getElementById('menu-screen'),
+                    gameoverScreen: document.getElementById('gameover-screen'),
+                    btnStart: document.getElementById('btn-start'),
+                    btnRestart: document.getElementById('btn-restart'),
+                    goScore: document.getElementById('go-score'),
+                    goAmber: document.getElementById('go-amber'),
+                    mobileJump: document.getElementById('mobile-jump'),
+                    mobileLeft: document.getElementById('mobile-left'),
+                    mobileRight: document.getElementById('mobile-right'),
+                    btnCamSide: document.getElementById('cam-side'),
+                    btnCamFollow: document.getElementById('cam-follow'),
+                    btnZoomNormal: document.getElementById('zoom-normal'),
+                    btnZoomWide: document.getElementById('zoom-wide'),
+                    btnScrollZoom: document.getElementById('btn-scroll-zoom'),
+                    speedVignette: document.getElementById('speed-vignette'),
+                    btnSettings: document.getElementById('btn-settings'),
+                    settingsDropdown: document.getElementById('settings-dropdown')
+                };
+
+                this.cameraMode = 'side'; // Default to side view
+                this.cameraZoom = 'wide'; // Default to wide view
+                this.cameraZoomFactor = 1.6; // Default zoom factor
+                this.scrollZoomEnabled = true; // Enable scroll zoom by default
+
+                // Setup listener buttons
+                this.dom.btnStart.addEventListener('click', () => this.startGame());
+                this.dom.btnRestart.addEventListener('click', () => this.restartGame());
+                
+                this.dom.btnCamSide.addEventListener('click', () => this.setCameraMode('side'));
+                this.dom.btnCamFollow.addEventListener('click', () => this.setCameraMode('follow'));
+
+                this.dom.btnZoomNormal.addEventListener('click', () => this.setCameraZoom('normal'));
+                this.dom.btnZoomWide.addEventListener('click', () => this.setCameraZoom('wide'));
+
+                this.dom.btnScrollZoom.addEventListener('click', () => this.toggleScrollZoom());
+
+                // Enable mouse wheel scrolling to zoom in/out
+                window.addEventListener('wheel', (e) => {
+                    if (this.state !== GAME_STATES.RUNNING && this.state !== GAME_STATES.MENU) return;
+                    if (!this.scrollZoomEnabled) return;
+                    
+                    const zoomDelta = e.deltaY * 0.0012;
+                    this.cameraZoomFactor = THREE.MathUtils.clamp(this.cameraZoomFactor + zoomDelta, 0.5, 3.5);
+                    this.updateZoomUI();
+                }, { passive: true });
+                
+                if (this.dom.btnSettings && this.dom.settingsDropdown) {
+                    this.dom.btnSettings.addEventListener('click', (e) => {
+                        this.dom.settingsDropdown.classList.toggle('hidden');
+                        e.stopPropagation();
+                    });
+                    document.addEventListener('click', () => {
+                        this.dom.settingsDropdown.classList.add('hidden');
+                    });
+                    this.dom.settingsDropdown.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                }
+
+                window.addEventListener('resize', () => this.onResize());
+
+                // Keys state
+                this.keys = { space: false, up: false, down: false, left: false, right: false };
+                window.addEventListener('keydown', (e) => this.onKeyDown(e));
+                window.addEventListener('keyup', (e) => this.onKeyUp(e));
+
+                this.setupMobileControls();
+                this.updateHighScoreUI();
+                this.updateMobileControlsUI();
+
+                // Start WebGL and load
+                this.initWebGL();
+                this.loadModel();
+            }
+
+            updateHighScoreUI() {
+                this.dom.highscore.textContent = String(Math.floor(this.highScore)).padStart(5, '0');
+            }
+
+            // Procedurally builds a subtly noisy sand texture + matching bump map
+            // so the ground reads as granular terrain instead of a flat color fill.
+            createSandTextures() {
+                const size = 256;
+                const canvas = document.createElement('canvas');
+                canvas.width = size; canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                const bumpCanvas = document.createElement('canvas');
+                bumpCanvas.width = size; bumpCanvas.height = size;
+                const bctx = bumpCanvas.getContext('2d');
+
+                const base = { r: 210, g: 180, b: 140 };
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const n = (Math.random() - 0.5) * 34;
+                        const speck = Math.random() > 0.985 ? (Math.random() * 60 - 30) : 0;
+                        const r = Math.min(255, Math.max(0, base.r + n + speck));
+                        const g = Math.min(255, Math.max(0, base.g + n * 0.85 + speck));
+                        const b = Math.min(255, Math.max(0, base.b + n * 0.6 + speck));
+                        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+                        ctx.fillRect(x, y, 1, 1);
+
+                        const grey = 128 + n * 2.2;
+                        bctx.fillStyle = `rgb(${grey|0},${grey|0},${grey|0})`;
+                        bctx.fillRect(x, y, 1, 1);
+                    }
+                }
+
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                const bump = new THREE.CanvasTexture(bumpCanvas);
+                bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+
+                return { map: tex, bumpMap: bump };
+            }
+
+            setCameraMode(mode) {
+                this.cameraMode = mode;
+                this.dom.btnCamSide.classList.remove('active');
+                this.dom.btnCamFollow.classList.remove('active');
+                
+                if (mode === 'side') {
+                    this.dom.btnCamSide.classList.add('active');
+                    this.currentLane = 0;
+                    this.trex.targetX = 0;
+                    this.trex.x = 0;
+                    if (this.trex.mesh) {
+                        this.trex.mesh.position.x = 0;
+                        this.trex.mesh.rotation.y = 0;
+                    }
+                } else {
+                    this.dom.btnCamFollow.classList.add('active');
+                }
+                this.updateMobileControlsUI();
+            }
+
+            updateMobileControlsUI() {
+                const btnLeft = document.getElementById('mobile-left');
+                const btnRight = document.getElementById('mobile-right');
+                if (btnLeft && btnRight) {
+                    if (this.cameraMode === 'side') {
+                        btnLeft.style.setProperty('display', 'none', 'important');
+                        btnRight.style.setProperty('display', 'none', 'important');
+                    } else {
+                        btnLeft.style.setProperty('display', 'flex', 'important');
+                        btnRight.style.setProperty('display', 'flex', 'important');
+                    }
+                }
+            }
+
+            setCameraZoom(zoom) {
+                this.cameraZoom = zoom;
+                this.cameraZoomFactor = zoom === 'normal' ? 1.0 : 1.6;
+                this.updateZoomUI();
+            }
+
+            toggleScrollZoom() {
+                this.scrollZoomEnabled = !this.scrollZoomEnabled;
+                if (this.scrollZoomEnabled) {
+                    this.dom.btnScrollZoom.classList.add('active');
+                    this.dom.btnScrollZoom.textContent = 'ON';
+                } else {
+                    this.dom.btnScrollZoom.classList.remove('active');
+                    this.dom.btnScrollZoom.textContent = 'OFF';
+                }
+            }
+
+            updateZoomUI() {
+                this.dom.btnZoomNormal.classList.remove('active');
+                this.dom.btnZoomWide.classList.remove('active');
+                
+                // Highlight the button closest to the current factor
+                if (Math.abs(this.cameraZoomFactor - 1.0) < Math.abs(this.cameraZoomFactor - 1.6)) {
+                    this.dom.btnZoomNormal.classList.add('active');
+                    this.cameraZoom = 'normal';
+                } else {
+                    this.dom.btnZoomWide.classList.add('active');
+                    this.cameraZoom = 'wide';
+                }
+            }
+
+            showMilestonePopup(value, title) {
+                const popup = document.getElementById('milestone-popup');
+                const pTitle = document.getElementById('milestone-title');
+                const pVal = document.getElementById('milestone-value');
+                if (popup && pTitle && pVal) {
+                    pTitle.textContent = title;
+                    pVal.textContent = value;
+                    popup.classList.remove('hidden');
+                    // Force reflow
+                    popup.offsetWidth;
+                    popup.classList.add('show');
+                    
+                    // Hide after 2.5 seconds
+                    if (this._popupTimeout) clearTimeout(this._popupTimeout);
+                    this._popupTimeout = setTimeout(() => {
+                        popup.classList.remove('show');
+                        setTimeout(() => popup.classList.add('hidden'), 300);
+                    }, 2500);
+                }
+            }
+
+            initWebGL() {
+                // Scene
+                this.scene = new THREE.Scene();
+                
+                const textureLoader = new THREE.TextureLoader();
+                textureLoader.load('sky.webp', (texture) => {
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    this.scene.background = texture;
+                    this.scene.environment = texture;
+                });
+                
+                // Cinematic warm desert dust fog for realistic depth shading
+                this.scene.fog = new THREE.FogExp2(0xe6d4b8, 0.008);
+
+                // Camera (Side View by default, matching classic layout ratio)
+                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(13.2, 2.2, 2.0); 
+                this.camera.lookAt(0, 1.4, -1.2);
+
+                // WebGL Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
+                // Perfect Cinematic Lighting / Realistic Renderer settings
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.1;
+                if ('outputEncoding' in this.renderer) {
+                    this.renderer.outputEncoding = THREE.sRGBEncoding;
+                }
+                if ('physicallyCorrectLights' in this.renderer) {
+                    this.renderer.physicallyCorrectLights = true;
+                }
+                
+                document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+
+                // Cinematic ambient lighting (Teal-Orange color harmony: warm sky blue ambient + gold sun)
+                const hemiLight = new THREE.HemisphereLight(0xffebcc, 0xc2b280, 0.45); 
+                this.scene.add(hemiLight);
+
+                this.dirLight = new THREE.DirectionalLight(0xffedd6, 1.65); // Warm cinematic golden sun
+                this.dirLight.position.set(-25, 22, 18); // Back-side sun for dramatic long shadows
+                this.dirLight.castShadow = true;
+                this.dirLight.shadow.mapSize.width = 2048; // Ultra-sharp shadows
+                this.dirLight.shadow.mapSize.height = 2048;
+                this.dirLight.shadow.bias = -0.0003;
+                this.dirLight.shadow.camera.near = 0.5;
+                this.dirLight.shadow.camera.far = 130;
+                this.dirLight.shadow.camera.left = -40;
+                this.dirLight.shadow.camera.right = 40;
+                this.dirLight.shadow.camera.top = 40;
+                this.dirLight.shadow.camera.bottom = -70;
+                this.scene.add(this.dirLight);
+
+                const fillLight = new THREE.DirectionalLight(0x7ec0ff, 0.35); // Cool skylight fill to contrast shadows
+                fillLight.position.set(25, 18, -12);
+                this.scene.add(fillLight);
+
+                // Warm ground bounce light — subtly lifts shadowed undersides,
+                // the way light scattered off sand/rock would in reality.
+                const bounceLight = new THREE.HemisphereLight(0xffebcc, 0x000000, 0.2);
+                bounceLight.position.set(0, -1, 0);
+                this.scene.add(bounceLight);
+
+                // Sun Mesh
+                const sunGeo = new THREE.SphereGeometry(6, 8, 8);
+                const sunMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee });
+                this.sunMesh = new THREE.Mesh(sunGeo, sunMat);
+                this.sunMesh.position.set(12, 38, -130);
+                this.scene.add(this.sunMesh);
+
+                // Build initial environmental ground segments
+                this.buildEnvironment();
+
+                // Spawn clouds disabled to keep sky clean
+                // for (let i = 0; i < 6; i++) {
+                //     this.spawnCloud(Math.random() * -150 - 50);
+                // }
+
+                // Add sandy dust storm particles disabled to keep sky clean
+                // this.buildAshParticles();
+
+                // Ground-hugging dust kicked up by footsteps/landings
+                this.buildDustSystem();
+
+                // Contact shadow disabled (realistic directional shadow is used instead)
+
+                // Distant heat haze — a faint shimmering plane near the volcanic
+                // mesas that reads as rising thermal distortion.
+                this.hazeClock = 0;
+                const hazeGeo = new THREE.PlaneGeometry(60, 10, 24, 4);
+                const hazeMat = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.05,
+                    depthWrite: false
+                });
+                this.hazePlane = new THREE.Mesh(hazeGeo, hazeMat);
+                this.hazePlane.position.set(0, 5, -70);
+                this.hazeBaseVerts = this.hazePlane.geometry.attributes.position.array.slice();
+                this.scene.add(this.hazePlane);
+
+                // Camera shake / speed-sensation state
+                this.shake = { x: 0, y: 0, trauma: 0 };
+                this.landingSquash = 0;
+            }
+
+            buildDustSystem() {
+                const count = 60;
+                this.dustGeometry = new THREE.BufferGeometry();
+                this.dustPositions = new Float32Array(count * 3);
+                this.dustVelocities = [];
+                this.dustLife = new Float32Array(count).fill(0);
+
+                for (let i = 0; i < count; i++) {
+                    this.dustPositions[i * 3] = 0;
+                    this.dustPositions[i * 3 + 1] = -5; // parked underground until emitted
+                    this.dustPositions[i * 3 + 2] = 0;
+                    this.dustVelocities.push({ x: 0, y: 0, z: 0 });
+                }
+                this.dustGeometry.setAttribute('position', new THREE.BufferAttribute(this.dustPositions, 3));
+                const mat = new THREE.PointsMaterial({
+                    color: 0xd8c6a0,
+                    size: 0.28,
+                    transparent: true,
+                    opacity: 0.55,
+                    depthWrite: false
+                });
+                this.dustPoints = new THREE.Points(this.dustGeometry, mat);
+                this.scene.add(this.dustPoints);
+                this.dustCursor = 0;
+            }
+
+            emitDust(x, y, z, count = 3, force = 1) {
+                if (!this.dustGeometry) return;
+                for (let n = 0; n < count; n++) {
+                    const i = this.dustCursor;
+                    this.dustCursor = (this.dustCursor + 1) % this.dustLife.length;
+                    this.dustPositions[i * 3] = x + (Math.random() - 0.5) * 0.6;
+                    this.dustPositions[i * 3 + 1] = y + 0.05;
+                    this.dustPositions[i * 3 + 2] = z + (Math.random() - 0.5) * 0.6;
+                    this.dustVelocities[i] = {
+                        x: (Math.random() - 0.5) * 1.2,
+                        y: (0.8 + Math.random() * 1.4) * force,
+                        z: (Math.random() - 0.5) * 1.2 - this.speed * 0.15
+                    };
+                    this.dustLife[i] = 0.55 + Math.random() * 0.25;
+                }
+            }
+
+            updateDust(dt) {
+                if (!this.dustGeometry) return;
+                for (let i = 0; i < this.dustLife.length; i++) {
+                    if (this.dustLife[i] > 0) {
+                        this.dustLife[i] -= dt;
+                        const v = this.dustVelocities[i];
+                        this.dustPositions[i * 3] += v.x * dt;
+                        this.dustPositions[i * 3 + 1] += v.y * dt;
+                        v.y -= 4.5 * dt; // gravity on the dust puff
+                        this.dustPositions[i * 3 + 2] += v.z * dt;
+                        if (this.dustLife[i] <= 0) {
+                            this.dustPositions[i * 3 + 1] = -5; // park it out of sight
+                        }
+                    }
+                }
+                this.dustGeometry.attributes.position.needsUpdate = true;
+            }
+
+            updateHeatHaze(dt) {
+                if (!this.hazePlane) return;
+                this.hazeClock += dt;
+                const posAttr = this.hazePlane.geometry.attributes.position;
+                const base = this.hazeBaseVerts;
+                for (let i = 0; i < posAttr.count; i++) {
+                    const bx = base[i * 3];
+                    const by = base[i * 3 + 1];
+                    posAttr.array[i * 3 + 2] = base[i * 3 + 2] + Math.sin(this.hazeClock * 1.4 + bx * 0.5 + by * 0.3) * 0.6;
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            getDuneHeight(x, z) {
+                const absX = Math.abs(x);
+                // Keep the road and curb stones flat. Road boundary is around 8.3, so keep flat up to x = 11.5
+                if (absX <= 11.5) return 0;
+                
+                const distToRoad = absX - 11.5;
+                // Blend height smoothly from 0 to full dune height over 12 units
+                const blendFactor = Math.min(1.0, distToRoad / 12.0);
+                
+                // We use base frequency for tiling period of 100 in Z
+                const baseFreqZ = (2 * Math.PI) / 100; // ~0.062831853
+                
+                // Overlay multiple sine waves for beautiful, organic rolling sand dunes
+                // Ensure all Z components are periodic multiples of baseFreqZ so segments tile seamlessly
+                const wave1 = Math.sin(x * 0.07) * Math.cos(z * baseFreqZ) * 4.5;
+                const wave2 = Math.sin(x * 0.14 + z * baseFreqZ * 2) * 1.5;
+                const wave3 = Math.cos(x * 0.035 - z * baseFreqZ) * 3.8; // larger rolling hills
+                
+                return (wave1 + wave2 + wave3) * blendFactor;
+            }
+
+            buildEnvironment() {
+                // Precompute the procedural sand texture once and reuse (cheaper + tileable).
+                const sandTex = this.createSandTextures();
+                sandTex.map.repeat.set(4, 24);
+                sandTex.bumpMap.repeat.set(4, 24);
+
+                const sandTexWide = this.createSandTextures();
+                sandTexWide.map.repeat.set(16, 24);
+                sandTexWide.bumpMap.repeat.set(16, 24);
+
+                // Unlimited scrolling road segments. 
+                // We tile 6 tiles of length 100, which wrap around.
+                const segmentLength = 100;
+                for (let i = -1; i < 5; i++) {
+                    const group = new THREE.Group();
+                    group.position.z = -i * segmentLength;
+                           // Road Center (Desert sand path with light lines)
+                    const roadGeo = new THREE.PlaneGeometry(16, segmentLength);
+                    const roadMat = new THREE.MeshStandardMaterial({
+                        color: 0xd2b48c, // Sandy path color
+                        map: sandTex.map,
+                        bumpMap: sandTex.bumpMap,
+                        bumpScale: 0.035,
+                        roughness: 0.95,
+                        metalness: 0.0
+                    });
+                    const road = new THREE.Mesh(roadGeo, roadMat);
+                    road.rotation.x = -Math.PI / 2;
+                    road.receiveShadow = true;
+                    road.name = 'groundTile';
+                    group.add(road);
+ 
+
+
+                    // Side sandy planes instead of lava rivers, now with wavy desert dunes
+                    const groundSidesMat = new THREE.MeshStandardMaterial({
+                        color: 0xc2b280, // Desert sand sides
+                        map: sandTexWide.map,
+                        bumpMap: sandTexWide.bumpMap,
+                        bumpScale: 0.05,
+                        roughness: 1.0,
+                        metalness: 0.0
+                    });
+                    
+                    // Left ground with modified height vertices
+                    const leftGroundGeo = new THREE.PlaneGeometry(80, segmentLength, 40, 40);
+                    const posAttrLeft = leftGroundGeo.attributes.position;
+                    for (let j = 0; j < posAttrLeft.count; j++) {
+                        const localX = posAttrLeft.getX(j);
+                        const localY = posAttrLeft.getY(j);
+                        const groupX = localX - 48; // since leftGround is at x = -48
+                        const groupZ = -localY; // world Z is -localY
+                        const height = this.getDuneHeight(groupX, groupZ);
+                        posAttrLeft.setZ(j, height);
+                    }
+                    leftGroundGeo.computeVertexNormals();
+
+                    const leftGround = new THREE.Mesh(leftGroundGeo, groundSidesMat);
+                    leftGround.rotation.x = -Math.PI / 2;
+                    leftGround.position.set(-48, -0.05, 0);
+                    leftGround.receiveShadow = true;
+                    leftGround.name = 'groundTile';
+                    group.add(leftGround);
+
+                    // Right ground with modified height vertices
+                    const rightGroundGeo = new THREE.PlaneGeometry(80, segmentLength, 40, 40);
+                    const posAttrRight = rightGroundGeo.attributes.position;
+                    for (let j = 0; j < posAttrRight.count; j++) {
+                        const localX = posAttrRight.getX(j);
+                        const localY = posAttrRight.getY(j);
+                        const groupX = localX + 48; // since rightGround is at x = 48
+                        const groupZ = -localY; // world Z is -localY
+                        const height = this.getDuneHeight(groupX, groupZ);
+                        posAttrRight.setZ(j, height);
+                    }
+                    rightGroundGeo.computeVertexNormals();
+
+                    const rightGround = new THREE.Mesh(rightGroundGeo, groundSidesMat);
+                    rightGround.rotation.x = -Math.PI / 2;
+                    rightGround.position.set(48, -0.05, 0);
+                    rightGround.receiveShadow = true;
+                    rightGround.name = 'groundTile';
+                    group.add(rightGround);
+
+                    // Curb sandstone boulders
+                    const curbGeo = new THREE.DodecahedronGeometry(0.5, 0);
+                    const curbMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9, flatShading: true }); // sandstone rocks
+                    for (let j = 0; j < segmentLength; j += 8) {
+                        const leftC = new THREE.Mesh(curbGeo, curbMat);
+                        leftC.position.set(-8.3, 0.2, -segmentLength/2 + j + Math.random()*2);
+                        leftC.rotation.set(Math.random(), Math.random(), Math.random());
+                        leftC.scale.set(1 + Math.random()*0.5, 1 + Math.random()*0.5, 1 + Math.random()*0.5);
+                        leftC.castShadow = true;
+                        leftC.receiveShadow = true;
+                        group.add(leftC);
+
+                        const rightC = leftC.clone();
+                        rightC.position.set(8.3, 0.2, -segmentLength/2 + j + Math.random()*2);
+                        group.add(rightC);
+                    }
+ 
+                    this.scene.add(group);
+                    this.groundTiles.push({
+                        mesh: group,
+                        length: segmentLength
+                    });
+                }
+            }
+ 
+            spawnMountain(parentGroup, xOffset, zOffset) {
+                const mesa = new THREE.Group();
+                const mX = xOffset + (Math.random() * 8 - 4);
+                const mZ = zOffset + (Math.random() * 30 - 15);
+                const mY = this.getDuneHeight(mX, mZ);
+                mesa.position.set(mX, mY, mZ);
+ 
+                const height = 12 + Math.random() * 10;
+                const topRad = 3 + Math.random() * 4;
+                const botRad = 8 + Math.random() * 6;
+                const mesaGeo = new THREE.CylinderGeometry(topRad, botRad, height, 6);
+                const mesaMat = new THREE.MeshStandardMaterial({
+                    color: 0xa0522d, // Sienna / desert clay cliffs
+                    roughness: 0.9,
+                    flatShading: true
+                });
+                const mesh = new THREE.Mesh(mesaGeo, mesaMat);
+                mesh.position.y = height / 2;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesa.add(mesh);
+ 
+                // Add small rocks clustered around the base
+                const rockGeo = new THREE.DodecahedronGeometry(1.2, 0);
+                const rockMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9, flatShading: true }); // sandstone rocks
+                for (let i = 0; i < 3; i++) {
+                    const rock = new THREE.Mesh(rockGeo, rockMat);
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = botRad - 1.0;
+                    rock.position.set(Math.cos(angle) * radius, 0.4, Math.sin(angle) * radius);
+                    rock.rotation.set(Math.random(), Math.random(), Math.random());
+                    rock.scale.set(1 + Math.random(), 1 + Math.random(), 1 + Math.random());
+                    mesa.add(rock);
+                }             
+
+                parentGroup.add(mesa);
+            }
+
+            buildStars() {
+                // Daytime desert: stars removed
+            }
+
+            buildAshParticles() {
+                const count = 250;
+                this.ashGeometry = new THREE.BufferGeometry();
+                this.ashPositions = new Float32Array(count * 3);
+                this.ashSpeeds = [];
+
+                for (let i = 0; i < count; i++) {
+                    this.ashPositions[i * 3] = Math.random() * 40 - 20;
+                    this.ashPositions[i * 3 + 1] = Math.random() * 25 + 5;
+                    this.ashPositions[i * 3 + 2] = Math.random() * -120 + 20;
+                    
+                    this.ashSpeeds.push({
+                        x: Math.random() * 0.02 - 0.01,
+                        y: Math.random() * 0.04 + 0.04,
+                        z: Math.random() * 0.02 - 0.01
+                    });
+                }
+                this.ashGeometry.setAttribute('position', new THREE.BufferAttribute(this.ashPositions, 3));
+                const mat = new THREE.PointsMaterial({ color: 0xdcdcdc, size: 0.22, transparent: true, opacity: 0.5 });
+                this.particles = new THREE.Points(this.ashGeometry, mat);
+                this.scene.add(this.particles);
+            }
+
+            updateAshParticles(delta) {
+                if (!this.particles) return;
+                const posArr = this.ashGeometry.attributes.position.array;
+                for (let i = 0; i < posArr.length / 3; i++) {
+                    const speed = this.ashSpeeds[i];
+                    posArr[i * 3] += speed.x * delta * 60;
+                    posArr[i * 3 + 1] -= speed.y * delta * 60;
+                    posArr[i * 3 + 2] += this.speed * delta;
+
+                    if (posArr[i * 3 + 1] < 0) {
+                        posArr[i * 3] = Math.random() * 40 - 20;
+                        posArr[i * 3 + 1] = 25;
+                        posArr[i * 3 + 2] = Math.random() * -120;
+                    }
+                    if (posArr[i * 3 + 2] > 20) {
+                        posArr[i * 3 + 2] = -100;
+                    }
+                }
+                this.ashGeometry.attributes.position.needsUpdate = true;
+            }
+
+            spawnCloud(zPos) {
+                const cloudGroup = new THREE.Group();
+                cloudGroup.position.set(Math.random() * 50 - 25, 13 + Math.random() * 5, zPos);
+                
+                const cloudMat = new THREE.MeshStandardMaterial({
+                    color: 0xeaeaea, // Soft light-grey cloud
+                    roughness: 0.95,
+                    flatShading: true,
+                    transparent: true,
+                    opacity: 0.6
+                });
+                
+                const count = 3 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < count; i++) {
+                    const r = 2.5 + Math.random() * 3;
+                    const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), cloudMat);
+                    sphere.position.set(i * 1.9 - (count*0.9), Math.random() * 0.5, Math.random() * 0.5);
+                    cloudGroup.add(sphere);
+                }
+                this.scene.add(cloudGroup);
+                this.clouds.push({ mesh: cloudGroup, speed: 2 + Math.random() * 2 });
+            }
+
+            // ==========================================
+            // 3. T-REX CHARACTER MODEL LOADING
+            // ==========================================
+            loadModel() {
+                const manager = new THREE.LoadingManager();
+                const loader = new THREE.GLTFLoader(manager);
+                const modelUrl = 'tyranosaurus-rex-animated/source/Tiranosaurio Rex desbocado.glb';
+                
+                manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+                    const percent = Math.round((itemsLoaded / itemsTotal) * 100);
+                    this.dom.loaderProgress.style.width = percent + '%';
+                    this.dom.loadingText.textContent = `Extracting Assets... ${percent}%`;
+                };
+
+                manager.onLoad = () => {
+                    this.dom.loaderProgress.style.width = '100%';
+                    this.dom.loadingText.textContent = 'World loaded perfectly!';
+                    
+                    // Spawn trees randomly on side ground areas
+                    this.spawnTreesOnGround();
+
+                    setTimeout(() => {
+                        this.setupTrex(this.dinoGltf);
+                        this.transitionState(GAME_STATES.MENU);
+                    }, 500);
+                };
+
+                manager.onError = (url) => {
+                    console.error('Error loading:', url);
+                    this.dom.loadingText.textContent = 'Error loading! Check server terminal.';
+                    this.dom.loadingText.style.color = '#ff3333';
+                };
+                
+                loader.load('cactus__pack.glb', (gltf) => {
+                    this.cactusMeshes = [];
+                    gltf.scene.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            child.position.set(0, 0, 0); // center it
+                            this.cactusMeshes.push(child);
+                        }
+                    });
+                });
+
+                // Load tree models from tree folder
+                this.treeMeshes = [];
+                const treePaths = [
+                    'tree/lowpoly_scan_trees_pack_1_live_oak_w_graffiti.glb',
+                    'tree/realistic_hd_canary_island_date_palm_3140.glb',
+                    'tree/realistic_hd_joshua_tree_1130.glb'
+                ];
+                treePaths.forEach(path => {
+                    loader.load(path, (gltf) => {
+                        gltf.scene.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+                        this.treeMeshes.push({
+                            path: path,
+                            scene: gltf.scene
+                        });
+                    });
+                });
+
+                // Removed loose sand GLB loader
+                
+                loader.load(modelUrl, (gltf) => {
+                    this.dinoGltf = gltf;
+                });
+            }
+
+            setupTrex(gltf) {
+                const model = gltf.scene;
+                
+                // Set scale to DINO_SCALE
+                model.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE);
+                model.position.set(0, 0, 0);
+                
+                // Flip model 180 degrees to face away from the camera
+                model.rotation.y = Math.PI; 
+                
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            child.material.roughness = 0.45; // Shinier specular highlights for realism
+                            child.material.metalness = 0.22; // Slightly metallic sheen for skin reflection
+                        }
+                    }
+                });
+                
+                this.trex.mesh = new THREE.Group();
+                this.trex.mesh.add(model);
+                this.trex.mesh.position.set(0, 0, 0);
+                this.scene.add(this.trex.mesh);
+                
+                this.trex.mixer = new THREE.AnimationMixer(model);
+                gltf.animations.forEach((clip) => {
+                    this.trex.animations[clip.name] = this.trex.mixer.clipAction(clip);
+                });
+                
+                this.playTrexAnimation('idle');
+            }
+
+            spawnTreesOnGround() {
+                if (!this.treeMeshes || this.treeMeshes.length === 0) return;
+                
+                this.groundTiles.forEach(tile => {
+                    const group = tile.mesh;
+                    const segmentLength = 100;
+                    
+                    // Spawn trees randomly outside the road area (|X| > 18.0)
+                    // This ensures foliage doesn't clip into the road or curbs.
+                    const leftCount = 4 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < leftCount; i++) {
+                        const treeData = this.treeMeshes[Math.floor(Math.random() * this.treeMeshes.length)];
+                        const treeScene = treeData.scene.clone();
+                        
+                        // Compute bounding box of the unscaled, unrotated tree model to center it
+                        const box = new THREE.Box3().setFromObject(treeScene);
+                        const center = new THREE.Vector3();
+                        box.getCenter(center);
+                        
+                        // Create a wrapper group and offset the tree scene inside it
+                        // so that (0, 0, 0) of the wrapper corresponds to the bottom center of the tree
+                        const wrapper = new THREE.Group();
+                        treeScene.position.set(-center.x, -box.min.y, -center.z);
+                        wrapper.add(treeScene);
+                        
+                        const x = -18.0 - Math.random() * 24.0; // between -18.0 and -42.0
+                        const z = -segmentLength / 2 + Math.random() * segmentLength;
+                        
+                        // Set scale based on the model type
+                        let scale = 0.5 + Math.random() * 0.5;
+                        if (treeData.path.includes('palm')) {
+                            scale *= 0.8;
+                        } else if (treeData.path.includes('joshua')) {
+                            scale *= 1.2;
+                        } else if (treeData.path.includes('oak')) {
+                            scale *= 0.65;
+                        }
+                        
+                        // Adjust Y height of the wrapper to sit perfectly on top of the dunes
+                        const y = this.getDuneHeight(x, z);
+                        
+                        wrapper.scale.set(scale, scale, scale);
+                        wrapper.position.set(x, y, z);
+                        wrapper.rotation.y = Math.random() * Math.PI * 2;
+                        
+                        group.add(wrapper);
+                    }
+
+                    const rightCount = 4 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < rightCount; i++) {
+                        const treeData = this.treeMeshes[Math.floor(Math.random() * this.treeMeshes.length)];
+                        const treeScene = treeData.scene.clone();
+                        
+                        // Compute bounding box of the unscaled, unrotated tree model to center it
+                        const box = new THREE.Box3().setFromObject(treeScene);
+                        const center = new THREE.Vector3();
+                        box.getCenter(center);
+                        
+                        // Create a wrapper group and offset the tree scene inside it
+                        const wrapper = new THREE.Group();
+                        treeScene.position.set(-center.x, -box.min.y, -center.z);
+                        wrapper.add(treeScene);
+                        
+                        const x = 18.0 + Math.random() * 24.0; // between 18.0 and 42.0
+                        const z = -segmentLength / 2 + Math.random() * segmentLength;
+                        
+                        // Set scale based on the model type
+                        let scale = 0.5 + Math.random() * 0.5;
+                        if (treeData.path.includes('palm')) {
+                            scale *= 0.8;
+                        } else if (treeData.path.includes('joshua')) {
+                            scale *= 1.2;
+                        } else if (treeData.path.includes('oak')) {
+                            scale *= 0.65;
+                        }
+                        
+                        // Adjust Y height of the wrapper to sit perfectly on top of the dunes
+                        const y = this.getDuneHeight(x, z);
+                        
+                        wrapper.scale.set(scale, scale, scale);
+                        wrapper.position.set(x, y, z);
+                        wrapper.rotation.y = Math.random() * Math.PI * 2;
+                        
+                        group.add(wrapper);
+                    }
+                });
+            }
+
+            playTrexAnimation(name, duration = 0.2) {
+                const action = this.trex.animations[name];
+                if (!action) return;
+                
+                if (this.trex.currentAnim === name) return;
+                
+                const prevAction = this.trex.animations[this.trex.currentAnim];
+                if (prevAction) {
+                    prevAction.fadeOut(duration);
+                }
+                
+                action.reset().fadeIn(duration).play();
+                this.trex.currentAnim = name;
+            }
+
+            // ==========================================
+            // 4. GAME STATES & CONTROLS
+            // ==========================================
+            transitionState(newState) {
+                this.state = newState;
+                console.log('Game State transitioned to:', newState);
+
+                this.dom.loadingScreen.classList.add('hidden');
+                this.dom.menuScreen.classList.add('hidden');
+                this.dom.gameoverScreen.classList.add('hidden');
+                this.dom.hud.classList.remove('visible');
+
+                if (newState === GAME_STATES.MENU) {
+                    this.dom.menuScreen.classList.remove('hidden');
+                    this.playTrexAnimation('idle');
+                    if (this.trex.mesh) {
+                        this.trex.mesh.position.set(0, 0, 0);
+                        this.trex.mesh.rotation.set(0, 0, 0);
+                        this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
+                        this.trex.x = 0;
+                        this.trex.targetX = 0;
+                        this.currentLane = 0;
+                        this.trex.y = 0;
+                        this.trex.isDucking = false; // Reset ducking state
+                    }
+                } else if (newState === GAME_STATES.RUNNING) {
+                    this.dom.hud.classList.add('visible');
+                    this.playTrexAnimation('run');
+                    if (this.trex.mesh) {
+                        this.trex.mesh.position.set(0, 0, 0);
+                        this.trex.mesh.rotation.set(0, 0, 0);
+                        this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
+                    }
+                } else if (newState === GAME_STATES.GAMEOVER) {
+                    this.dom.gameoverScreen.classList.remove('hidden');
+                    this.dom.hud.classList.add('visible'); // Keep HUD visible during game over like screenshot!
+                    
+                    // Fall down crash animation
+                    if (this.trex.mesh) {
+                        this.trex.mesh.rotation.z = Math.PI / 2.6; 
+                        this.trex.mesh.position.y = 0.35;
+                    }
+                    this.playTrexAnimation('roar', 0.1);
+                    
+                    if (this.score > this.highScore) {
+                        this.highScore = this.score;
+                        localStorage.setItem('trex3d_highscore', this.highScore);
+                        this.updateHighScoreUI();
+                    }
+                }
+            }
+
+            startGame() {
+                synth.init();
+                this.score = 0;
+                this.triggeredMilestones = { 100: false, 500: false, 1000: false, 2000: false, 5000: false, 10000: false };
+                this.highScoreBroken = false;
+                this.amberCount = 0;
+                this.speed = config.speedStart;
+                this.distanceTraveled = 0;
+                this.lastObstacleZ = -25; // Clear start runway
+                this.currentLane = 0;
+                this.trex.x = 0;
+                this.trex.targetX = 0;
+                this.trex.y = 0;
+                this.trex.velocity = 0;
+                this.trex.isGrounded = true;
+                this.trex.isDucking = false; // Reset ducking state
+                this.shake.trauma = 0;
+                this.shake.x = 0;
+                this.shake.y = 0;
+                this.landingSquash = 0;
+                this.camera.fov = 60;
+                this.camera.updateProjectionMatrix();
+                if (this.dom.speedVignette) this.dom.speedVignette.style.opacity = 0;
+                
+                if (this.trex.mesh) {
+                    this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
+                }
+                
+                this.obstacles.forEach(obs => this.scene.remove(obs.mesh));
+                this.obstacles = [];
+                this.collectibles.forEach(col => this.scene.remove(col.mesh));
+                this.collectibles = [];
+
+                this.dom.score.textContent = '00000';
+                if (this.dom.amber) this.dom.amber.textContent = '00';
+
+                this.transitionState(GAME_STATES.RUNNING);
+            }
+
+            restartGame() {
+                this.startGame();
+            }
+
+            onKeyDown(e) {
+                if (this.state !== GAME_STATES.RUNNING) return;
+                
+                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    this.keys.space = true;
+                    this.jump();
+                    e.preventDefault();
+                }
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    this.keys.left = true;
+                    if (!e.repeat) this.moveLane(-1);
+                    e.preventDefault();
+                }
+                if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    this.keys.right = true;
+                    if (!e.repeat) this.moveLane(1);
+                    e.preventDefault();
+                }
+            }
+
+            onKeyUp(e) {
+                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    this.keys.space = false;
+                }
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    this.keys.left = false;
+                }
+                if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    this.keys.right = false;
+                }
+            }
+
+            setupMobileControls() {
+                this.dom.mobileJump.addEventListener('touchstart', (e) => {
+                    this.jump();
+                    e.preventDefault();
+                });
+
+                this.dom.mobileLeft.addEventListener('touchstart', (e) => {
+                    this.moveLane(-1);
+                    e.preventDefault();
+                });
+
+                this.dom.mobileRight.addEventListener('touchstart', (e) => {
+                    this.moveLane(1);
+                    e.preventDefault();
+                });
+
+                // Tap anywhere on canvas/screen to jump (except UI buttons/settings dropdown)
+                window.addEventListener('touchstart', (e) => {
+                    if (this.state !== GAME_STATES.RUNNING) return;
+                    
+                    let target = e.target;
+                    while (target && target !== document.body) {
+                        if (target.tagName === 'BUTTON' || 
+                            target.id === 'settings-dropdown' || 
+                            target.classList.contains('mobile-btn') || 
+                            target.closest('.top-buttons')) {
+                            return; // Ignore screen tap if pressing buttons/settings
+                        }
+                        target = target.parentElement;
+                    }
+                    
+                    this.jump();
+                    e.preventDefault();
+                }, { passive: false });
+            }
+
+            jump() {
+                if (this.trex.isGrounded && !this.trex.isDucking) {
+                    this.trex.velocity = config.jumpVelocity;
+                    this.trex.isGrounded = false;
+                    this.emitDust(this.trex.x, 0, 0.4, 6, 0.9);
+                    this.landingSquash = 0.5; // brief anticipation crouch on takeoff too
+                    synth.playJump();
+                }
+            }
+
+            duck(isDucking) {
+                // Ducking disabled as per request
+            }
+
+            moveLane(dir) {
+                if (this.state !== GAME_STATES.RUNNING) return;
+                if (this.cameraMode === 'side') return; // Disable lane changing in Side View camera mode
+                this.currentLane = THREE.MathUtils.clamp((this.currentLane || 0) + dir, -1, 1);
+                this.trex.targetX = this.currentLane * config.laneWidth;
+                
+                // Tilt rotation during lane change
+                if (this.trex.mesh) {
+                    this.trex.mesh.rotation.y = (dir * 0.15); // subtle bank angle
+                    setTimeout(() => {
+                        if (this.state === GAME_STATES.RUNNING && this.trex.mesh) {
+                            this.trex.mesh.rotation.y = 0;
+                        }
+                    }, 150);
+                }
+            }
+
+            // ==========================================
+            // 5. CACTUS & COLLECTIBLE SPRAWNING
+            // ==========================================
+            spawnObstacle() {
+                // In 3rd person view, spawn randomly in any of the 3 lanes (-1, 0, 1)
+                // In side view, spawn only in the center lane (0)
+                let laneX = 0;
+                if (this.cameraMode !== 'side') {
+                    const lanes = [-1, 0, 1];
+                    const chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
+                    laneX = chosenLane * config.laneWidth;
+                }
+
+                // ONLY CACTUS IS OBSTACLE
+                const obstacle = this.createCactus();
+                obstacle.mesh.position.set(laneX, 0, this.lastObstacleZ);
+                obstacle.type = 'cactus';
+
+                obstacle.boundingBox = new THREE.Box3();
+                this.scene.add(obstacle.mesh);
+                this.obstacles.push(obstacle);
+            }
+
+            createCactus() {
+                const group = new THREE.Group();
+                let width = 0;
+                let height = 0;
+                let depth = 0;
+
+                const count = Math.random() > 0.65 ? 2 : 1; // 35% chance of 2 cacti
+                for (let i = 0; i < count; i++) {
+                    if (this.cactusMeshes && this.cactusMeshes.length > 0) {
+                        const mesh = this.cactusMeshes[Math.floor(Math.random() * this.cactusMeshes.length)].clone();
+                        const scale = 0.4 + Math.random() * 0.4;
+                        mesh.scale.set(scale, scale, scale);
+                        mesh.rotation.x = -Math.PI / 2;
+                        mesh.rotation.z = Math.random() * Math.PI * 2;
+                        // Position them slightly apart
+                        mesh.position.set(i * 1.0 - ((count - 1) * 0.5), 0, (Math.random() - 0.5) * 0.4);
+                        group.add(mesh);
+
+                        width = Math.max(width, 0.9 * scale + (count - 1) * 1.0);
+                        height = Math.max(height, 2.2 * scale);
+                        depth = Math.max(depth, 0.5 * scale + 0.4);
+                    }
+                }
+                
+                // Fallback if no meshes loaded yet
+                if (group.children.length === 0) {
+                    const material = new THREE.MeshStandardMaterial({
+                        color: 0x3aa73a,
+                        roughness: 0.85,
+                        flatShading: true
+                    });
+                    const scale = 1.0 + Math.random() * 0.6;
+                    group.scale.set(scale, scale, scale);
+                    width = 0.9 * scale; height = 2.2 * scale; depth = 0.5 * scale;
+                }
+
+                return { mesh: group, width, height, depth };
+            }
+            createPterodactyl() {
+                const group = new THREE.Group();
+                const material = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.8, flatShading: true });
+
+                const body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 1.1, 5), material);
+                body.rotation.x = Math.PI / 2;
+                group.add(body);
+
+                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 5), material);
+                beak.rotation.x = -Math.PI / 2;
+                beak.position.set(0, 0.1, -0.6);
+                group.add(beak);
+
+                const wingGeo = new THREE.BufferGeometry();
+                wingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, -1.2,0,0.2, -0.6,0,-0.4]), 3));
+                const leftWing = new THREE.Mesh(wingGeo, material);
+                group.add(leftWing);
+
+                const rightWingGeo = new THREE.BufferGeometry();
+                rightWingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, 0.6,0,-0.4, 1.2,0,0.2]), 3));
+                const rightWing = new THREE.Mesh(rightWingGeo, material);
+                group.add(rightWing);
+
+                return {
+                    mesh: group,
+                    leftWing: leftWing,
+                    rightWing: rightWing,
+                    width: 2.2, height: 0.5, depth: 1.0,
+                    update: (time) => {
+                        const flap = Math.sin(time * 15) * 0.65;
+                        leftWing.rotation.z = flap;
+                        rightWing.rotation.z = -flap;
+                    }
+                };
+            }
+
+            createLavaPit() {
+                const group = new THREE.Group();
+                const surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.8), new THREE.MeshBasicMaterial({ color: 0xff4500 }));
+                surface.rotation.x = -Math.PI / 2;
+                group.add(surface);
+
+                const border = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.05, 3.0), new THREE.MeshStandardMaterial({ color: 0x3d304a, roughness: 0.9 }));
+                border.position.y = -0.03;
+                group.add(border);
+
+                return { mesh: group, width: 1.8, height: 0.2, depth: 2.8 };
+            }
+
+            spawnCollectible(zPos) {
+                const group = new THREE.Group();
+                const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.35, 0), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+                group.add(mesh);
+
+                const pl = new THREE.PointLight(0xffaa00, 1.2, 5);
+                group.add(pl);
+
+                const y = Math.random() > 0.5 ? 2.5 : 1.0;
+                
+                let laneX = 0;
+                if (this.cameraMode !== 'side') {
+                    const lanes = [-1, 0, 1];
+                    const chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
+                    laneX = chosenLane * config.laneWidth;
+                }
+
+                group.position.set(laneX, y, zPos);
+                this.scene.add(group);
+                this.collectibles.push({ mesh: group, yBase: y, boundingBox: new THREE.Box3() });
+            }
+
+            // ==========================================
+            // 6. ENGINE MAIN GAME LOOP (TICK)
+            // ==========================================
+            tick(time, delta) {
+                const maxDelta = 0.1;
+                const dt = Math.min(delta, maxDelta);
+
+                if (this.state === GAME_STATES.RUNNING) {
+                    // AUTO-RUN MECHANICS: Dinosaur speed increases automatically over time
+                    this.speed = Math.min(config.speedMax, this.speed + config.speedAcceleration * dt);
+                    this.score += this.speed * dt * 1.5;
+                    this.dom.score.textContent = String(Math.floor(this.score)).padStart(5, '0');
+
+                    const floorScore = Math.floor(this.score);
+                    for (const milestone of [100, 500, 1000, 2000, 5000, 10000]) {
+                        if (floorScore >= milestone && !this.triggeredMilestones[milestone]) {
+                            this.triggeredMilestones[milestone] = true;
+                            this.showMilestonePopup(milestone + " PTS", "MILESTONE!");
+                            synth.playMilestone();
+                        }
+                    }
+                    if (this.highScore > 0 && floorScore > this.highScore && !this.highScoreBroken) {
+                        this.highScoreBroken = true;
+                        this.showMilestonePopup("NEW RECORD!", "HIGH SCORE!");
+                        synth.playMilestone();
+                    }
+
+                    // Update player physics (auto running moves obstacles, dino handles jump & side slides)
+                    this.updateTrexPhysics(dt);
+
+                    // Scroll infinite road segments
+                    this.scrollGround(dt);
+                    // this.scrollClouds(dt);
+
+                    // Obstacle Spawners
+                    this.handleSpawns(dt);
+
+                    // Scroll and update active obstacles
+                    this.updateObstacles(time, dt);
+                    this.updateCollectibles(time, dt);
+
+                    this.checkCollisions();
+                } else if (this.state === GAME_STATES.MENU) {
+                    // this.scrollClouds(dt);
+                }
+
+                // this.updateAshParticles(dt);
+                // this.updateDust(dt);
+                // this.updateHeatHaze(dt);
+                this.updateCameraShake(dt);
+
+                if (this.trex.mixer) {
+                    this.trex.mixer.update(dt);
+                }
+
+                // Sell speed with a widening FOV and a stronger vignette as velocity climbs
+                if (this.state === GAME_STATES.RUNNING) {
+                    const speedRatio = (this.speed - config.speedStart) / (config.speedMax - config.speedStart);
+                    const targetFov = 60 + speedRatio * 12;
+                    this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, dt * 2);
+                    this.camera.updateProjectionMatrix();
+                    if (this.dom.speedVignette) {
+                        this.dom.speedVignette.style.opacity = Math.max(0, speedRatio - 0.15) * 0.8;
+                    }
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            updateTrexPhysics(dt) {
+                // 1. Vertical physics (Jumping)
+                if (!this.trex.isGrounded) {
+                    this.trex.velocity += config.gravity * dt;
+                    this.trex.y += this.trex.velocity * dt;
+
+                    if (this.trex.y <= 0) {
+                        const fallSpeed = Math.abs(this.trex.velocity);
+                        this.trex.y = 0;
+                        this.trex.velocity = 0;
+                        this.trex.isGrounded = true;
+                        if (this.state === GAME_STATES.RUNNING) {
+                            this.playTrexAnimation(this.trex.isDucking ? 'idle' : 'run', 0.1);
+                            // Landing impact: dust burst, squash-and-stretch, and a light shake
+                            this.emitDust(this.trex.x, 0, 0.4, 10, 1 + fallSpeed * 0.03);
+                            this.landingSquash = Math.min(1, fallSpeed / config.jumpVelocity);
+                            this.addShake(Math.min(0.35, fallSpeed / 90));
+                        }
+                    }
+                }
+
+                // 2. Horizontal physics (Lane changing slides)
+                this.trex.x = THREE.MathUtils.lerp(this.trex.x || 0, this.trex.targetX || 0, dt * 11);
+
+                // Set positions
+                if (this.trex.mesh) {
+                    this.trex.mesh.position.set(this.trex.x, this.trex.y, 0);
+                }
+
+                // Update bounding box coordinates for exact collisions
+                if (this.trex.mesh) {
+                    const scaleRatio = DINO_SCALE / 0.55;
+                    const trexHeight = 4.0 * scaleRatio;
+                    const trexWidth = 1.1 * scaleRatio;
+                    const trexDepth = 1.6 * scaleRatio;
+                    this.trex.boundingBox.setFromCenterAndSize(
+                        new THREE.Vector3(this.trex.x, this.trex.y + trexHeight/2, 0),
+                        new THREE.Vector3(trexWidth, trexHeight, trexDepth)
+                    );
+                }
+
+                // Smoothly update camera position and lookAt depending on selected view mode
+                const zoomFactor = this.cameraZoomFactor;
+
+                if (this.cameraMode === 'side') {
+                    // Side View: Camera moves slightly with the player X but stays mostly stationary on the side
+                    const targetCamX = (8.5 + this.trex.x * 0.45) * zoomFactor;
+                    const targetCamY = (2.6 + this.trex.y * 0.15) * zoomFactor;
+                    this.camera.position.set(targetCamX + this.shake.x, targetCamY + this.shake.y, -1.2 * zoomFactor);
+                    this.camera.lookAt(this.trex.x * 0.75, 1.5 * zoomFactor, -2.5);
+                } else {
+                    // 3rd Person Follow View: Camera tracks behind player
+                    this.camera.position.x = 0; // Stays centered so dinosaur moves in 3 rows on screen
+                    this.camera.position.y = 5.5 * zoomFactor + this.shake.y;
+                    this.camera.position.z = 10.5 * zoomFactor;
+                    this.camera.lookAt(0, 2.2 * zoomFactor, -4.0); // Look straight ahead down the road
+                }
+
+                // Contact shadow disabled
+
+                // Kick up trailing dust while grounded and running at speed
+                if (this.trex.isGrounded && this.state === GAME_STATES.RUNNING && this.speed > 2) {
+                    this._dustTimer = (this._dustTimer || 0) - dt;
+                    if (this._dustTimer <= 0) {
+                        this.emitDust(this.trex.x - 0.6, 0, 0.9, 2, 0.6);
+                        this._dustTimer = 0.09;
+                    }
+                }
+
+                // Keep dinosaur scale constant at DINO_SCALE under all conditions
+                if (this.trex.mesh) {
+                    this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE);
+                }
+            }
+
+            scrollGround(dt) {
+                // Ground scroll backward relative to run speed
+                this.groundTiles.forEach(tile => {
+                    tile.mesh.position.z += this.speed * dt;
+                    if (tile.mesh.position.z > 120) {
+                        tile.mesh.position.z -= this.groundTiles.length * tile.length;
+                    }
+                });
+            }
+
+            scrollClouds(dt) {
+                this.clouds.forEach(cloud => {
+                    cloud.mesh.position.x += cloud.speed * dt * 0.2;
+                    cloud.mesh.position.z += this.speed * dt * 0.08;
+                    if (cloud.mesh.position.z > 40) {
+                        cloud.mesh.position.z = -150 - Math.random() * 50;
+                        cloud.mesh.position.x = Math.random() * 50 - 25;
+                    }
+                });
+            }
+
+            handleSpawns(dt) {
+                this.lastObstacleZ += this.speed * dt;
+                const spawnTrigger = config.spawnMinDistance + Math.random() * (config.spawnMaxDistance - config.spawnMinDistance);
+                if (this.lastObstacleZ > 0) {
+                    this.lastObstacleZ = -spawnTrigger;
+                    this.spawnObstacle();
+                }
+            }
+
+            updateObstacles(time, dt) {
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    const obs = this.obstacles[i];
+                    obs.mesh.position.z += this.speed * dt; // moves towards camera (+Z)
+
+                    if (obs.update) obs.update(time);
+
+                    if (obs.mesh.position.z > 15) {
+                        this.scene.remove(obs.mesh);
+                        this.obstacles.splice(i, 1);
+                    } else {
+                        obs.boundingBox.setFromCenterAndSize(
+                            obs.mesh.position,
+                            new THREE.Vector3(obs.width, obs.height, obs.depth)
+                        );
+                    }
+                }
+            }
+
+            updateCollectibles(time, dt) {
+                for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                    const col = this.collectibles[i];
+                    col.mesh.position.z += this.speed * dt;
+                    col.mesh.rotation.y = time * 3;
+                    col.mesh.position.y = col.yBase + Math.sin(time * 4) * 0.15;
+
+                    if (col.mesh.position.z > 15) {
+                        this.scene.remove(col.mesh);
+                        this.collectibles.splice(i, 1);
+                    } else {
+                        col.boundingBox.setFromCenterAndSize(col.mesh.position, new THREE.Vector3(0.7, 0.7, 0.7));
+                    }
+                }
+            }
+
+            checkCollisions() {
+                // 1. Cacti/Obstacle collisions (Damage -> Game Over)
+                for (let i = 0; i < this.obstacles.length; i++) {
+                    const obs = this.obstacles[i];
+                    if (this.trex.boundingBox.intersectsBox(obs.boundingBox)) {
+                        synth.playHit();
+                        this.addShake(1.0);
+                        this.emitDust(this.trex.x, 0.3, 0, 14, 1.6);
+                        this.transitionState(GAME_STATES.GAMEOVER);
+                        return;
+                    }
+                }
+
+                // 2. Amber Crystals collections
+                for (let i = this.collectibles.length - 1; i >= 0; i--) {
+                    const col = this.collectibles[i];
+                    if (this.trex.boundingBox.intersectsBox(col.boundingBox)) {
+                        synth.playCollect();
+                        this.amberCount++;
+                        this.score += 250;
+                        this.dom.amber.textContent = String(this.amberCount).padStart(2, '0');
+                        this.scene.remove(col.mesh);
+                        this.collectibles.splice(i, 1);
+                    }
+                }
+            }
+
+            addShake(amount) {
+                this.shake.trauma = Math.min(1, this.shake.trauma + amount);
+            }
+
+            updateCameraShake(dt) {
+                if (this.shake.trauma > 0) {
+                    this.shake.trauma = Math.max(0, this.shake.trauma - dt * 2.2);
+                    const t = this.shake.trauma * this.shake.trauma; // ease-in falloff
+                    this.shake.x = (Math.random() - 0.5) * 0.4 * t;
+                    this.shake.y = (Math.random() - 0.5) * 0.3 * t;
+                } else {
+                    this.shake.x = 0;
+                    this.shake.y = 0;
+                }
+            }
+
+            onResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // Film grain canvas animation (for movie grain overlay)
+        function initFilmGrain() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const imgData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imgData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = Math.random() * 255;
+                data[i] = noise;
+                data[i + 1] = noise;
+                data[i + 2] = noise;
+                data[i + 3] = 255;
+            }
+            
+            ctx.putImageData(imgData, 0, 0);
+            const dataUrl = canvas.toDataURL();
+            
+            const grainDiv = document.getElementById('film-grain');
+            if (grainDiv) {
+                grainDiv.style.backgroundImage = `url(${dataUrl})`;
+            }
+        }
+
+        // Boot Game Loop on load
+        window.addEventListener('load', () => {
+            initFilmGrain();
+            const game = new Game();
+            const clock = new THREE.Clock();
+            function loop() {
+                requestAnimationFrame(loop);
+                const delta = clock.getDelta();
+                const time = clock.getElapsedTime();
+                game.tick(time, delta);
+            }
+            loop();
+        });
+    </script>
+</body>
+</html>
