@@ -1,14 +1,10 @@
 /**
- * p0rn API proxy backend
- * - Hides upstream API from the browser
- * - Same-origin only (no public CORS)
- * - Basic rate limit + cache
- * - Serves frontend from ../frontend
- *
+ * p0rn — single backend file
  * Run:  node server.js
- * Env:  PORT=3000  UPSTREAM=https://xvidapi.com/api.php/provide/vod
+ * Open: http://localhost:3000
+ *
+ * Serves index.html from the same folder and proxies API (upstream hidden).
  */
-
 const http = require("http");
 const https = require("https");
 const fs = require("fs");
@@ -17,212 +13,163 @@ const { URL } = require("url");
 
 const PORT = Number(process.env.PORT) || 3000;
 const UPSTREAM = process.env.UPSTREAM || "https://xvidapi.com/api.php/provide/vod";
-const FRONTEND_DIR = path.join(__dirname, "..", "frontend");
-const CACHE_TTL_MS = 60_000; // 1 min
-const RATE_WINDOW_MS = 60_000;
-const RATE_MAX = 120; // per IP per minute
+const ROOT = __dirname;
+const PAGE_SIZE = 24;
 
 const cache = new Map();
-const hits = new Map(); // ip -> { count, reset }
+const hits = new Map();
+const CACHE_TTL = 45_000;
+const RATE_MAX = 180;
+const RATE_WIN = 60_000;
 
-function clientIp(req) {
-  return (
-    (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
-    req.socket.remoteAddress ||
-    "unknown"
-  );
+function ip(req) {
+  return (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "0";
 }
-
-function rateLimit(ip) {
+function limited(addr) {
   const now = Date.now();
-  let row = hits.get(ip);
-  if (!row || now > row.reset) {
-    row = { count: 0, reset: now + RATE_WINDOW_MS };
-    hits.set(ip, row);
+  let r = hits.get(addr);
+  if (!r || now > r.reset) {
+    r = { n: 0, reset: now + RATE_WIN };
+    hits.set(addr, r);
   }
-  row.count += 1;
-  return row.count <= RATE_MAX;
+  r.n++;
+  return r.n <= RATE_MAX;
 }
-
-function cacheKey(qs) {
-  return qs;
-}
-
-function getCache(key) {
-  const row = cache.get(key);
-  if (!row) return null;
-  if (Date.now() > row.exp) {
-    cache.delete(key);
+function getC(k) {
+  const r = cache.get(k);
+  if (!r) return null;
+  if (Date.now() > r.exp) {
+    cache.delete(k);
     return null;
   }
-  return row.body;
+  return r.body;
+}
+function setC(k, body) {
+  cache.set(k, { body, exp: Date.now() + CACHE_TTL });
+  if (cache.size > 400) cache.delete(cache.keys().next().value);
 }
 
-function setCache(key, body) {
-  cache.set(key, { body, exp: Date.now() + CACHE_TTL_MS });
-  if (cache.size > 500) {
-    const first = cache.keys().next().value;
-    cache.delete(first);
-  }
-}
-
-function upstreamGet(queryString) {
+function upstream(qs) {
   return new Promise((resolve, reject) => {
-    const url = `${UPSTREAM}?${queryString}`;
+    const url = UPSTREAM + "?" + qs;
     const lib = url.startsWith("https") ? https : http;
     const req = lib.get(
       url,
-      {
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "p0rn-proxy/1.0"
-        },
-        timeout: 20000
-      },
+      { headers: { Accept: "application/json", "User-Agent": "p0rn/2" }, timeout: 15000 },
       (res) => {
-        let data = "";
-        res.on("data", (c) => (data += c));
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
         res.on("end", () => {
-          if (res.statusCode && res.statusCode >= 400) {
-            reject(new Error("Upstream " + res.statusCode));
-            return;
-          }
-          resolve(data);
+          const body = Buffer.concat(chunks).toString("utf8");
+          if (res.statusCode >= 400) return reject(new Error("up " + res.statusCode));
+          resolve(body);
         });
       }
     );
     req.on("error", reject);
     req.on("timeout", () => {
       req.destroy();
-      reject(new Error("Upstream timeout"));
+      reject(new Error("timeout"));
     });
   });
 }
 
-function sendJson(res, status, obj) {
-  const body = typeof obj === "string" ? obj : JSON.stringify(obj);
-  res.writeHead(status, {
+function json(res, code, data) {
+  const body = typeof data === "string" ? data : JSON.stringify(data);
+  res.writeHead(code, {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "public, max-age=30",
+    "Cache-Control": "public, max-age=20",
     "X-Content-Type-Options": "nosniff"
   });
   res.end(body);
 }
 
-function sendText(res, status, text, type) {
-  res.writeHead(status, {
-    "Content-Type": type || "text/plain; charset=utf-8",
-    "X-Content-Type-Options": "nosniff"
-  });
-  res.end(text);
-}
-
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".json": "application/json"
-};
-
-function serveStatic(req, res, urlPath) {
-  let rel = decodeURIComponent(urlPath.split("?")[0]);
-  if (rel === "/" || rel === "") rel = "/index.html";
-  // block path traversal
-  const safe = path.normalize(rel).replace(/^(\.\.[/\\])+/, "");
-  const filePath = path.join(FRONTEND_DIR, safe);
-  if (!filePath.startsWith(FRONTEND_DIR)) {
-    sendText(res, 403, "Forbidden");
-    return;
-  }
-  fs.readFile(filePath, (err, data) => {
+function file(res, filePath, type) {
+  fs.readFile(filePath, (err, buf) => {
     if (err) {
-      // SPA fallback
-      const index = path.join(FRONTEND_DIR, "index.html");
-      fs.readFile(index, (e2, html) => {
-        if (e2) return sendText(res, 404, "Not found");
-        sendText(res, 200, html, "text/html; charset=utf-8");
-      });
-      return;
+      res.writeHead(404);
+      return res.end("Not found");
     }
-    const ext = path.extname(filePath).toLowerCase();
-    sendText(res, 200, data, MIME[ext] || "application/octet-stream");
+    res.writeHead(200, {
+      "Content-Type": type,
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": type.includes("html") ? "no-cache" : "public, max-age=3600"
+    });
+    res.end(buf);
   });
 }
 
 const server = http.createServer(async (req, res) => {
-  // Security headers
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("X-Content-Type-Options", "nosniff");
-  // No open CORS — browser only talks same-origin
-  res.setHeader("Access-Control-Allow-Origin", "null");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  const ip = clientIp(req);
-  if (!rateLimit(ip)) {
-    return sendJson(res, 429, { code: 0, msg: "Too many requests" });
-  }
+  if (!limited(ip(req))) return json(res, 429, { code: 0, msg: "Too many requests" });
 
-  const u = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const u = new URL(req.url || "/", "http://x");
 
-  // Health
-  if (u.pathname === "/api/health") {
-    return sendJson(res, 200, { ok: true });
-  }
+  if (u.pathname === "/api/health") return json(res, 200, { ok: true });
 
-  // Proxy: /api/vod?...  mirrors upstream query params
-  if (u.pathname === "/api/vod" || u.pathname === "/api/vod/") {
-    if (req.method !== "GET") {
-      return sendJson(res, 405, { code: 0, msg: "GET only" });
-    }
+  if (u.pathname === "/api/vod") {
+    if (req.method !== "GET") return json(res, 405, { code: 0, msg: "GET only" });
 
-    // Only allow known params
-    const allowed = ["ac", "at", "pg", "t", "wd", "ids", "h"];
+    const allowed = ["ac", "pg", "t", "wd", "ids", "pagesize"];
     const qs = new URLSearchParams();
     qs.set("at", "json");
-    for (const key of allowed) {
-      if (key === "at") continue;
-      const v = u.searchParams.get(key);
-      if (v != null && v !== "") qs.set(key, v);
+    for (const k of allowed) {
+      const v = u.searchParams.get(k);
+      if (v) qs.set(k, v);
     }
     if (!qs.get("ac")) qs.set("ac", "detail");
+    if (!qs.get("pagesize") && qs.get("ac") === "detail" && !qs.get("ids")) {
+      qs.set("pagesize", String(PAGE_SIZE));
+    }
 
     const key = qs.toString();
-    const cached = getCache(key);
-    if (cached) {
+    const hit = getC(key);
+    if (hit) {
       res.setHeader("X-Cache", "HIT");
-      return sendJson(res, 200, cached);
+      return json(res, 200, hit);
     }
 
     try {
-      const body = await upstreamGet(key);
-      // validate JSON
+      const body = await upstream(key);
       JSON.parse(body);
-      setCache(key, body);
+      setC(key, body);
       res.setHeader("X-Cache", "MISS");
-      return sendJson(res, 200, body);
+      return json(res, 200, body);
     } catch (e) {
-      console.error("[proxy]", e.message);
-      return sendJson(res, 502, { code: 0, msg: "Upstream error" });
+      console.error(e.message);
+      return json(res, 502, { code: 0, msg: "Upstream error" });
     }
   }
 
-  // Block direct probing of other /api paths
-  if (u.pathname.startsWith("/api/")) {
-    return sendJson(res, 404, { code: 0, msg: "Not found" });
-  }
+  if (u.pathname.startsWith("/api/")) return json(res, 404, { code: 0, msg: "Not found" });
 
-  // Static frontend
-  serveStatic(req, res, u.pathname);
+  let rel = decodeURIComponent(u.pathname);
+  if (rel === "/" || rel === "") rel = "/index.html";
+  const safe = path.normalize(rel).replace(/^(\.\.[/\\])+/, "");
+  const fp = path.join(ROOT, safe);
+  if (!fp.startsWith(ROOT)) {
+    res.writeHead(403);
+    return res.end("Forbidden");
+  }
+  const ext = path.extname(fp).toLowerCase();
+  const types = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript",
+    ".css": "text/css",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".ico": "image/x-icon",
+    ".svg": "image/svg+xml"
+  };
+  file(res, fp, types[ext] || "application/octet-stream");
 });
 
 server.listen(PORT, () => {
-  console.log(`p0rn backend on http://localhost:${PORT}`);
-  console.log(`frontend: ${FRONTEND_DIR}`);
-  console.log(`upstream hidden — clients only hit /api/vod`);
+  console.log("p0rn → http://localhost:" + PORT);
+  console.log("Put index.html next to this server.js");
 });

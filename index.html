@@ -1237,6 +1237,40 @@
     .hub-title { font-size: 28px; font-weight: 700; }
     .brand-wrap { font-family: var(--font-display); }
 
+
+    .thumb-wrap img,
+    .cat-stack-front img,
+    .hist-thumb img,
+    .up-thumb img {
+      opacity: 0.35;
+      transition: opacity 0.18s ease, filter 0.2s ease;
+      filter: blur(6px);
+    }
+    .thumb-wrap img.loaded,
+    .cat-stack-front img.loaded,
+    .hist-thumb img.loaded,
+    .up-thumb img.loaded {
+      opacity: 1;
+      filter: blur(0);
+    }
+    .thumb-wrap img.lq,
+    .cat-stack-front img.lq {
+      filter: blur(6px);
+    }
+    .scroll-sentinel {
+      height: 1px;
+      width: 100%;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .infinite-status {
+      text-align: center;
+      padding: 16px;
+      color: var(--cream-dim);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
   </style>
 </head>
 <body>
@@ -1279,21 +1313,93 @@
   /* ==========================================================================
      XVIDAPI CLIENT
      ========================================================================== */
-  /* Calls YOUR backend only — upstream URL is not exposed */
-  const API_BASE = "/api/vod";
+  /* Prefer same-origin proxy; auto-fallback to upstream if proxy missing */
+  const PROXY = "/api/vod";
+  const DIRECT = "https://xvidapi.com/api.php/provide/vod";
+  const PAGE_SIZE = 24;
+
+  /* 50 curated categories — instant, no list API wait */
+  const BUILTIN_CATEGORIES = [
+    { id: 41, name: "Indian" },
+    { id: 8, name: "Amateur" },
+    { id: 65, name: "Teen" },
+    { id: 49, name: "MILF" },
+    { id: 44, name: "Latina" },
+    { id: 11, name: "Asian Woman" },
+    { id: 43, name: "Japanese" },
+    { id: 45, name: "Lesbian" },
+    { id: 9, name: "Anal" },
+    { id: 20, name: "Big Tits" },
+    { id: 23, name: "Blowjob" },
+    { id: 27, name: "Creampie" },
+    { id: 53, name: "Pornstar" },
+    { id: 30, name: "Exotic" },
+    { id: 42, name: "Interracial" },
+    { id: 37, name: "Gangbang" },
+    { id: 15, name: "BBW" },
+    { id: 10, name: "Arab" },
+    { id: 54, name: "Real Amateur" },
+    { id: 26, name: "Cam Porn" },
+    { id: 16, name: "BDSM" },
+    { id: 18, name: "Big Ass" },
+    { id: 19, name: "Big Cock" },
+    { id: 22, name: "Blonde" },
+    { id: 24, name: "Brunette" },
+    { id: 29, name: "Cumshot" },
+    { id: 31, name: "Facial" },
+    { id: 34, name: "Femdom" },
+    { id: 47, name: "Massage" },
+    { id: 48, name: "Mature" },
+    { id: 51, name: "Orgy" },
+    { id: 62, name: "Squirting" },
+    { id: 63, name: "Stockings" },
+    { id: 64, name: "Swingers" },
+    { id: 68, name: "Virtual Reality" },
+    { id: 7, name: "AI" },
+    { id: 13, name: "Ass" },
+    { id: 21, name: "Black Woman" },
+    { id: 28, name: "Cuckold" },
+    { id: 38, name: "Gapes" },
+    { id: 40, name: "Heels" },
+    { id: 46, name: "Lingerie" },
+    { id: 50, name: "Oiled" },
+    { id: 55, name: "Redhead" },
+    { id: 58, name: "Sexy" },
+    { id: 60, name: "Shemale" },
+    { id: 61, name: "Solo Masturbation" },
+    { id: 66, name: "Toons" },
+    { id: 69, name: "Workout" },
+    { id: 12, name: "ASMR" }
+  ];
+  let useProxy = true;
 
   async function apiFetch(params = {}) {
-    const q = new URLSearchParams({ at: "json", ...params });
-    const url = `${API_BASE}?${q.toString()}`;
-    const res = await fetch(url, {
-      headers: { "Accept": "application/json" },
-      credentials: "same-origin",
-      cache: "default"
-    });
-    if (!res.ok) throw new Error("API " + res.status);
-    const data = await res.json();
-    if (data.code !== 1) throw new Error(data.msg || "API error");
-    return data;
+    const q = new URLSearchParams({ at: "json", pagesize: String(PAGE_SIZE), ...params });
+    // single video by id doesn't need pagesize
+    if (params.ids) q.delete("pagesize");
+    if (params.ac === "list") q.delete("pagesize");
+
+    async function hit(base) {
+      const res = await fetch(base + "?" + q.toString(), {
+        headers: { Accept: "application/json" },
+        credentials: base.startsWith("/") ? "same-origin" : "omit",
+        cache: "default"
+      });
+      if (!res.ok) throw new Error("API " + res.status);
+      const data = await res.json();
+      if (data.code !== 1 && data.code !== "1") throw new Error(data.msg || "API error");
+      return data;
+    }
+
+    if (useProxy) {
+      try {
+        return await hit(PROXY);
+      } catch (e) {
+        console.warn("proxy fail, using direct", e.message);
+        useProxy = false;
+      }
+    }
+    return await hit(DIRECT);
   }
 
   function normalizeVideo(raw) {
@@ -1377,14 +1483,13 @@
       this.applyTheme();
       this.renderNav();
       this.bindSearch();
-      this.showLoading("Loading categories…");
       try {
         await this.loadCategories();
         this.renderCategoryBar();
         this.navigate("home");
       } catch (e) {
         console.error(e);
-        this.showError("Failed to load API. Please refresh.");
+        this.showError("Failed to load. Please refresh.");
       }
 
       window.addEventListener("popstate", () => {
@@ -1394,63 +1499,98 @@
     }
 
     async loadCategories() {
-      const data = await apiFetch({ ac: "list" });
-      this.categories = (data.class || [])
-        .filter(c => c.type_name && !["Xvidapi", "Unknown"].includes(c.type_name))
-        .map(c => ({
-          id: c.type_id,
-          slug: String(c.type_id),
-          name: c.type_name,
-          count: null,
-          thumb: null,
-          loadingMeta: false
-        }));
+      // Instant from code — no list API
+      this.categories = BUILTIN_CATEGORIES.map(c => ({
+        id: c.id,
+        slug: String(c.id),
+        name: c.name,
+        count: null,
+        thumb: null,
+        loadingMeta: false
+      }));
     }
 
     async enrichCategoryMeta(cat) {
-      if (!cat || cat.count != null || cat.loadingMeta) return;
+      if (!cat || cat.thumb != null || cat.loadingMeta) return;
       cat.loadingMeta = true;
       try {
-        const result = await this.fetchVideos({ page: 1, typeId: cat.id });
-        cat.count = result.total || 0;
-        const first = result.list && result.list[0];
-        if (first) cat.thumb = first.thumbnail || first.poster || null;
+        const data = await apiFetch({
+          ac: "detail",
+          pg: "1",
+          pagesize: "1",
+          t: String(cat.id)
+        });
+        const raw = (data.list || [])[0];
+        if (raw) {
+          const v = normalizeVideo(raw);
+          cat.thumb = v.thumbnail || v.poster || null;
+        }
+        if (!cat.thumb) cat.thumb = ""; // mark done even if empty
+        this.patchCategoryCard(cat);
       } catch (e) {
         console.warn("meta fail", cat.name, e);
-        cat.count = cat.count ?? 0;
+        cat.thumb = cat.thumb || "";
+        this.patchCategoryCard(cat);
       } finally {
         cat.loadingMeta = false;
       }
     }
 
-    async enrichAllCategoryMetas() {
-      const priority = ["Indian","Amateur","Teen","MILF","Latina","Asian Woman","Japanese","Lesbian","Anal","Big Tits","Exotic","Interracial"];
-      const pending = this.categories.filter(c => c.count == null)
-        .sort((a,b) => {
-          const ia = priority.indexOf(a.name); const ib = priority.indexOf(b.name);
-          return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-        });
-      const concurrency = 10;
-      for (let i = 0; i < pending.length; i += concurrency) {
-        const batch = pending.slice(i, i + concurrency);
-        await Promise.all(batch.map(c => this.enrichCategoryMeta(c)));
-        if (this.tab === "category" && !this.selectedCat) {
-          this.renderCategories(true);
+    patchCategoryCard(cat) {
+      if (this.tab !== "category" || this.selectedCat) return;
+      const card = document.querySelector('.cat-card[data-cat-id="' + cat.id + '"]');
+      if (!card) return;
+      const front = card.querySelector(".cat-stack-front");
+      if (cat.thumb && front && !front.querySelector("img")) {
+        const ph = front.querySelector(".cat-placeholder");
+        const img = document.createElement("img");
+        img.alt = cat.name || "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.className = "lq";
+        img.onload = () => this.onImgProgress(img);
+        img.onerror = () => { img.style.display = "none"; if (ph) ph.style.display = "flex"; };
+        img.src = cat.thumb;
+        if (ph) {
+          ph.style.display = "none";
+          front.insertBefore(img, ph);
+        } else {
+          front.insertBefore(img, front.firstChild);
         }
       }
     }
 
+    async enrichAllCategoryMetas() {
+      if (this._enrichRunning) return;
+      this._enrichRunning = true;
+      const pending = this.categories.filter(c => c.thumb == null && !c.loadingMeta);
+      // First 12 in parallel, then rest — thumbs only
+      try {
+        const wave1 = pending.slice(0, 12);
+        await Promise.all(wave1.map(c => this.enrichCategoryMeta(c)));
+        for (let i = 12; i < pending.length; i += 12) {
+          if (this.tab !== "category") break;
+          await Promise.all(pending.slice(i, i + 12).map(c => this.enrichCategoryMeta(c)));
+        }
+      } finally {
+        this._enrichRunning = false;
+      }
+    }
+
     async fetchVideos({ page = 1, typeId = null, keyword = null } = {}) {
-      const params = { ac: "detail", pg: String(page) };
+      const params = { ac: "detail", pg: String(page), pagesize: String(PAGE_SIZE) };
       if (typeId && typeId !== "all") params.t = String(typeId);
       if (keyword) params.wd = keyword;
       const data = await apiFetch(params);
-      const list = (data.list || []).map(normalizeVideo).filter(v => v.id);
+      let list = (data.list || []).map(normalizeVideo).filter(v => v.id);
+      // safety cap if upstream ignores pagesize
+      if (list.length > PAGE_SIZE) list = list.slice(0, PAGE_SIZE);
+      const pagecount = Number(data.pagecount) || 1;
       return {
         list,
-        page: data.page || page,
-        pagecount: data.pagecount || 1,
-        total: data.total || list.length
+        page: Number(data.page) || page,
+        pagecount,
+        total: Number(data.total) || list.length
       };
     }
 
@@ -1769,11 +1909,17 @@
         </div>`;
     }
 
-    card(v) {
-      const thumb = v.thumbnail || v.poster || "";
-      const img = thumb
-        ? `<img src="${this.esc(thumb)}" alt="${this.esc(v.title)}" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
-        : `<div class="cat-placeholder">▶</div>`;
+    card(v, idx = 99) {
+      const hi = v.thumbnail || v.poster || "";
+      const lo = v.poster && v.thumbnail && v.poster !== v.thumbnail ? v.poster : "";
+      let img = `<div class="cat-placeholder">▶</div>`;
+      if (hi) {
+        const src = lo || hi;
+        const dataHi = lo ? hi : "";
+        const eager = idx < 8;
+        const prio = idx < 4 ? "high" : (eager ? "auto" : "low");
+        img = `<img src="${this.esc(src)}" alt="${this.esc(v.title)}" loading="${eager ? "eager" : "lazy"}" decoding="async" fetchpriority="${prio}" class="lq" data-hi="${this.esc(dataHi)}" onload="app.onImgProgress(this)" onerror="this.style.display='none'" />`;
+      }
       return `
         <div class="video-card" onclick="app.playVideo(${v.id})">
           <div class="thumb-wrap">
@@ -1788,6 +1934,31 @@
           </div>
         </div>
       `;
+    }
+
+    onImgProgress(el) {
+      if (!el) return;
+      const hi = el.getAttribute("data-hi");
+      if (hi && hi !== el.src && !el.dataset.upgraded) {
+        el.dataset.upgraded = "1";
+        const full = new Image();
+        full.decoding = "async";
+        full.onload = () => {
+          el.src = hi;
+          el.classList.remove("lq");
+          el.classList.add("loaded");
+        };
+        full.onerror = () => {
+          el.classList.remove("lq");
+          el.classList.add("loaded");
+        };
+        full.src = hi;
+      } else {
+        requestAnimationFrame(() => {
+          el.classList.remove("lq");
+          el.classList.add("loaded");
+        });
+      }
     }
 
     async loadAndRenderHome(append = false) {
@@ -1808,15 +1979,7 @@
           typeId = this.activeCat;
         }
 
-        // Home "All" = mixed feed: random page for variety
         let page = this.page;
-        if (!append && this.activeCat === "all" && !keyword) {
-          // first load mix from a random early page range for variety
-          const mixPage = Math.floor(Math.random() * 30) + 1;
-          page = mixPage;
-          this.page = mixPage;
-        }
-
         const result = await this.fetchVideos({
           page,
           typeId,
@@ -1829,12 +1992,8 @@
             if (!ids.has(v.id)) this.videos.push(v);
           });
         } else {
-          // shuffle mix on home all
-          let list = result.list;
-          if (this.activeCat === "all" && !keyword) {
-            list = list.slice().sort(() => Math.random() - 0.5);
-          }
-          this.videos = list;
+          // Home All = latest/viral order from API (page 1 first)
+          this.videos = result.list;
         }
         this.pagecount = result.pagecount;
         this.total = result.total;
@@ -1886,28 +2045,89 @@
           </div>
         `;
       } else {
-        html += `<div class="videos-grid">${list.map(v => this.card(v)).join("")}</div>`;
+        html += `<div class="videos-grid" id="videosGrid">${list.map((v,i) => this.card(v,i)).join("")}</div>`;
         if (this.page < this.pagecount) {
-          html += `
-            <div class="load-more-wrap">
-              <button class="ctrl-btn solid" id="loadMoreBtn" onclick="app.loadMore()">
-                Load more
-              </button>
-            </div>`;
+          html += `<div class="scroll-sentinel" id="scrollSentinel"></div>
+            <div class="infinite-status" id="infiniteStatus"></div>`;
         }
       }
 
       main.innerHTML = html;
+      this.bindInfiniteScroll();
+      // silent preload next page into memory (no UI)
+      if (this.page < this.pagecount && !this._preloading) {
+        this._preloading = true;
+        const next = this.page + 1;
+        const typeId = (this.activeCat && this.activeCat !== "all" && !String(this.activeCat).startsWith("kw:")) ? this.activeCat : null;
+        const keyword = this.query || (String(this.activeCat || "").startsWith("kw:") ? String(this.activeCat).slice(3) : null);
+        this.fetchVideos({ page: next, typeId, keyword }).then(r => {
+          this._prefetch = { page: next, list: r.list, pagecount: r.pagecount };
+        }).catch(() => {}).finally(() => { this._preloading = false; });
+      }
+    }
+
+    bindInfiniteScroll() {
+      if (this._io) {
+        this._io.disconnect();
+        this._io = null;
+      }
+      const el = document.getElementById("scrollSentinel");
+      if (!el) return;
+      this._io = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) this.loadMoreSilent();
+      }, { rootMargin: "400px 0px" });
+      this._io.observe(el);
+    }
+
+    async loadMoreSilent() {
+      if (this.loading || this.page >= this.pagecount) return;
+      this.loading = true;
+      const st = document.getElementById("infiniteStatus");
+      if (st) st.textContent = "Loading…";
+      this.page += 1;
+      try {
+        let typeId = null;
+        let keyword = this.query || null;
+        if (this.activeCat && String(this.activeCat).startsWith("kw:")) {
+          keyword = keyword || String(this.activeCat).slice(3);
+        } else if (this.activeCat && this.activeCat !== "all") {
+          typeId = this.activeCat;
+        }
+        if (this.selectedCat) typeId = this.selectedCat.id;
+
+        let result;
+        if (this._prefetch && this._prefetch.page === this.page) {
+          result = this._prefetch;
+          this._prefetch = null;
+        } else {
+          result = await this.fetchVideos({ page: this.page, typeId, keyword });
+        }
+        const ids = new Set(this.videos.map(v => v.id));
+        const fresh = (result.list || []).filter(v => !ids.has(v.id));
+        this.videos.push(...fresh);
+        this.pagecount = result.pagecount;
+
+        const grid = document.getElementById("videosGrid");
+        if (grid && fresh.length) {
+          grid.insertAdjacentHTML("beforeend", fresh.map((v,i) => this.card(v, 99)).join(""));
+        }
+        if (this.page >= this.pagecount) {
+          if (st) st.textContent = "";
+          const sen = document.getElementById("scrollSentinel");
+          if (sen) sen.remove();
+          if (this._io) { this._io.disconnect(); this._io = null; }
+        } else if (st) st.textContent = "";
+      } catch (e) {
+        console.error(e);
+        if (st) st.textContent = "Could not load more";
+        this.page -= 1;
+      } finally {
+        this.loading = false;
+      }
     }
 
     async loadMore() {
-      const btn = document.getElementById("loadMoreBtn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Loading…";
-      }
-      this.page += 1;
-      await this.loadAndRenderHome(true);
+      await this.loadMoreSilent();
     }
 
     async shuffleFeed() {
@@ -1917,7 +2137,7 @@
         setTimeout(() => btn.classList.remove("spin-anim"), 460);
       }
       // Jump to a random page for variety
-      const maxPage = Math.min(this.pagecount || 50, 200);
+      const maxPage = Math.min(this.pagecount || 20, 40);
       this.page = Math.floor(Math.random() * maxPage) + 1;
       this.videos = [];
       await this.loadAndRenderHome();
@@ -1947,37 +2167,34 @@
       let html = `
         <div class="section-head">
           <h2 class="section-title">Categories</h2>
-          <span class="section-count">${this.categories.length} collections</span>
+          <span class="section-count">${this.categories.length} categories</span>
         </div>
         <div class="categories-grid">
       `;
 
       ordered.forEach(cat => {
         const initial = cat.name.charAt(0).toUpperCase();
-        const countLabel = cat.count != null
-          ? `${Number(cat.count).toLocaleString()} videos`
-          : (cat.loadingMeta ? "Loading…" : "Explore collection");
         const thumbHtml = cat.thumb
-          ? `<img src="${this.esc(cat.thumb)}" alt="${this.esc(cat.name)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')" />
+          ? `<img src="${this.esc(cat.thumb)}" alt="${this.esc(cat.name)}" loading="lazy" decoding="async" class="lq" onload="app.onImgProgress(this)" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')" />
              <div class="cat-placeholder" style="display:none">${this.esc(initial)}</div>`
           : `<div class="cat-placeholder">${this.esc(initial)}</div>`;
 
         html += `
-          <div class="cat-card" onclick="app.openCategoryHub('${cat.id}')">
+          <div class="cat-card" data-cat-id="${cat.id}" onclick="app.openCategoryHub('${cat.id}')">
             <div class="cat-stack">
               <div class="cat-stack-back"></div>
               <div class="cat-stack-front">
                 ${thumbHtml}
                 <div class="cat-overlay">
-                  <span class="cat-overlay-count">${cat.count != null ? Number(cat.count).toLocaleString() : "—"}</span>
-                  <span class="cat-overlay-label">videos</span>
+                  <span class="cat-overlay-count">${this.esc(cat.name)}</span>
+                  <span class="cat-overlay-label">open</span>
                 </div>
               </div>
             </div>
             <div class="cat-info-row">
               <div>
                 <h3 class="cat-name">${this.esc(cat.name)}</h3>
-                <div class="cat-count-sub">${this.esc(countLabel)}</div>
+                <div class="cat-count-sub">Browse</div>
               </div>
             </div>
           </div>
@@ -2030,7 +2247,7 @@
             </div>
             <div class="cat-hub-text">
               <h2>${this.esc(cat.name)}</h2>
-              <p>${this.total.toLocaleString()} videos available</p>
+              <p>Browse collection</p>
             </div>
           </div>
           <div style="display:flex;gap:8px;">
@@ -2044,51 +2261,24 @@
           <h3 class="section-title">Videos in ${this.esc(cat.name)}</h3>
         </div>
         <div class="videos-grid">
-          ${this.videos.map(v => this.card(v)).join("")}
+          ${this.videos.map((v,i) => this.card(v,i)).join("")}
         </div>
       `;
 
       if (this.page < this.pagecount) {
-        html += `
-          <div class="load-more-wrap">
-            <button class="ctrl-btn solid" id="loadMoreBtn" onclick="app.loadMoreHub()">
-              Load more
-            </button>
-          </div>`;
+        html += `<div class="scroll-sentinel" id="scrollSentinel"></div>
+          <div class="infinite-status" id="infiniteStatus"></div>`;
       }
 
       main.innerHTML = html;
+      // mark grid for append
+      const grid = main.querySelector(".videos-grid");
+      if (grid) grid.id = "videosGrid";
+      this.bindInfiniteScroll();
     }
 
     async loadMoreHub() {
-      if (!this.selectedCat || this.loading) return;
-      this.loading = true;
-      const btn = document.getElementById("loadMoreBtn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Loading…";
-      }
-      this.page += 1;
-      try {
-        const result = await this.fetchVideos({
-          page: this.page,
-          typeId: this.selectedCat.id
-        });
-        const ids = new Set(this.videos.map(v => v.id));
-        result.list.forEach(v => {
-          if (!ids.has(v.id)) this.videos.push(v);
-        });
-        this.pagecount = result.pagecount;
-        this.renderCategoryHub(this.selectedCat);
-      } catch (e) {
-        this.toast("Failed to load more");
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "Load more";
-        }
-      } finally {
-        this.loading = false;
-      }
+      await this.loadMoreSilent();
     }
 
     closeCategoryHub() {
@@ -2292,7 +2482,7 @@
           <div class="up-card" onclick="app.playVideo(${r.id})">
             <div class="up-thumb">
               ${r.thumbnail
-                ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+                ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" class="lq" onload="app.onImgProgress(this)" onerror="this.style.display='none'" />`
                 : ""}
               <span class="badge-duration" style="font-size:9.5px;padding:2px 4px;">${this.esc(r.duration)}</span>
             </div>
@@ -2399,7 +2589,7 @@
                     <div class="up-card" onclick="app.playVideo(${r.id})">
                       <div class="up-thumb">
                         ${r.thumbnail
-                          ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+                          ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" class="lq" onload="app.onImgProgress(this)" onerror="this.style.display='none'" />`
                           : ""}
                         <span class="badge-duration" style="font-size:9.5px;padding:2px 4px;">${this.esc(r.duration)}</span>
                       </div>
