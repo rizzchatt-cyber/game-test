@@ -1,2329 +1,2462 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D T-Rex: Volcanic Runner</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #535353;
-            --primary-glow: rgba(83, 83, 83, 0.15);
-            --secondary: #747474;
-            --secondary-glow: rgba(116, 116, 116, 0.1);
-            --bg-dark: #f7f7f7;
-            --glass-bg: #f7f7f7;
-            --glass-border: #535353;
-            --glass-border-glow: transparent;
-            --text-light: #535353;
-            --text-muted: #838383;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, user-scalable=yes" />
+  <title>p0rn</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <meta name="theme-color" content="#1A1210" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+  <style>
+    :root {
+      /* Ember Night — dark warm base so thumbs pop; tomato & honey accents */
+      --bg: #1A1210;
+      --bg-header: #1A1210;
+      --bg-card: #2A1F1C;
+      --bg-card-hover: #352824;
+      --bg-card-inner: #3D2E28;
+      --bg-subtle: #241A17;
+      --cream: #F4D59A;
+      --cream-light: #f9e6bc;
+      --cream-dim: rgba(244, 213, 154, 0.78);
+      --cream-sub: rgba(244, 213, 154, 0.55);
+      --accent: #E04A2F;
+      --accent-soft: #C93D21;
+      --border: rgba(244, 213, 154, 0.14);
+      --border-focus: #F4D59A;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      --radius-sm: 8px;
+      --radius: 14px;
+      --radius-lg: 18px;
+      --pill: 9999px;
+      --header-h: 64px;
+      --bottom-h: 58px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --font: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+      --paper-opacity: 0.08;
+    }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: var(--bg-dark);
-            font-family: 'Press Start 2P', monospace;
-            color: var(--text-light);
-        }
+    body.cream-theme {
+      /* Honey Butter — warm light */
+      --bg: #F4D59A;
+      --bg-header: #F4D59A;
+      --bg-card: #f8e4b5;
+      --bg-card-hover: #f0d9a0;
+      --bg-card-inner: #e8cd8e;
+      --bg-subtle: #e5c888;
+      --cream: #8B2E1A;
+      --cream-light: #C93D21;
+      --cream-dim: rgba(139, 46, 26, 0.78);
+      --cream-sub: rgba(139, 46, 26, 0.55);
+      --accent: #C93D21;
+      --accent-soft: #E04A2F;
+      --border: rgba(139, 46, 26, 0.18);
+      --border-focus: #C93D21;
+      --shadow: 0 6px 22px rgba(139, 46, 26, 0.14);
+      --paper-opacity: 0.09;
+    }
 
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* --- UI OVERLAYS (Flat Retro Chrome Dino Page) --- */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(247, 247, 247, 0.85); /* Clean flat light overlay */
-            transition: opacity 0.5s ease, visibility 0.5s ease;
-        }
+    html {
+      font-size: 14px;
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
 
-        .overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--cream);
+      min-height: 100dvh;
+      line-height: 1.45;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      position: relative;
+    }
+    /* Paper-like grain texture overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      opacity: var(--paper-opacity);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 180px 180px;
+      mix-blend-mode: overlay;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9997;
+      opacity: 0.06;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(0,0,0,0.12) 0%, transparent 45%);
+    }
 
-        .hidden {
-            display: none !important;
-        }
+    header, nav, .bottom-nav, .bg-card, .video-card, .cat-card, .account-hub-container, input {
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
 
-        .glass-panel {
-            background: var(--glass-bg);
-            border: 3px solid var(--glass-border);
-            border-radius: 0px; /* Sharp retro corners */
-            padding: 30px 20px;
-            max-width: 480px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 6px 6px 0px var(--glass-border); /* Flat retro shadow */
-            transform: translateY(0);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(244, 213, 154, 0.4); border-radius: 6px; }
 
-        .overlay.hidden .glass-panel {
-            transform: translateY(15px);
-        }
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+    .icon svg {
+      display: block;
+      fill: currentColor;
+    }
 
-        h1 {
-            font-family: 'Press Start 2P', monospace;
-            font-weight: 400;
-            font-size: 16px;
-            margin: 0 0 16px 0;
-            color: var(--text-light);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      height: var(--header-h);
+      padding: 0 20px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
 
-        .subtitle {
-            font-family: 'Press Start 2P', monospace;
-            color: var(--text-muted);
-            font-size: 8px;
-            margin-bottom: 25px;
-            font-weight: 400;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .brand-logo-img {
+      height: 40px;
+      width: auto;
+      max-width: 130px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.18));
+      transition: transform 0.2s ease;
+    }
+    .brand-wrap:hover .brand-logo-img {
+      transform: scale(1.04);
+    }
 
-        .btn {
-            background: var(--primary);
-            border: 2px solid var(--primary);
-            color: #f7f7f7;
-            padding: 12px 28px;
-            font-size: 8px;
-            font-weight: 400;
-            border-radius: 0px; /* Sharp corners */
-            cursor: pointer;
-            transition: all 0.15s ease;
-            font-family: 'Press Start 2P', monospace;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            outline: none;
-            box-shadow: 3px 3px 0px var(--secondary);
-        }
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-card);
+      padding: 3px 5px;
+      border-radius: var(--pill);
+      border: 1px solid var(--border);
+    }
+    .nav-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 16px;
+      border: none;
+      border-radius: var(--pill);
+      background: transparent;
+      color: var(--cream);
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      font-family: inherit;
+    }
+    .nav-tab:hover {
+      background: rgba(252, 236, 200, 0.12);
+    }
+    .nav-tab.active {
+      background: var(--cream);
+      color: var(--bg);
+      box-shadow: 0 2px 12px rgba(224, 74, 47, 0.35);
+    }
 
-        .btn:hover {
-            transform: translate(-2px, -2px);
-            background: var(--bg-dark);
-            color: var(--primary);
-            box-shadow: 5px 5px 0px var(--primary);
-        }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
 
-        .btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 1px 1px 0px var(--primary);
-        }
+    .header-search {
+      width: 220px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--pill);
+      padding: 0 12px;
+      transition: width 0.22s ease, border-color 0.2s ease;
+    }
+    .header-search:focus-within {
+      width: 280px;
+      border-color: var(--border-focus);
+      background: var(--bg-card-hover);
+    }
+    .header-search .icon {
+      color: var(--cream-sub);
+    }
+    .header-search input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--cream);
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
+      margin: 0 6px;
+      font-family: inherit;
+    }
+    .header-search input::placeholder {
+      color: var(--cream-sub);
+    }
+    .clear-btn {
+      background: transparent;
+      border: none;
+      color: var(--cream-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+    }
+    .clear-btn:hover {
+      color: var(--cream);
+    }
 
-        /* --- LOADING SCREEN --- */
-        #loading-screen {
-            background: var(--bg-dark);
-            z-index: 100;
-        }
+    .theme-circle-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .theme-circle-btn:hover {
+      background: var(--bg-card-hover);
+      transform: scale(1.06);
+    }
+    .theme-circle-btn:active {
+      transform: scale(0.95);
+    }
+    .theme-circle-btn.spin-anim .icon {
+      animation: themeSpin 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes themeSpin {
+      0% { transform: scale(0.6) rotate(0deg); opacity: 0.4; }
+      50% { transform: scale(1.25) rotate(200deg); opacity: 1; }
+      100% { transform: scale(1) rotate(360deg); opacity: 1; }
+    }
 
-        .loader-container {
-            width: 100%;
-            max-width: 240px;
-            margin: 20px auto 10px auto;
-        }
+    .shuffle-btn.spin-anim .icon {
+      animation: shuffleSpin 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes shuffleSpin {
+      0% { transform: rotate(0deg) scale(0.9); }
+      50% { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
 
-        .loader-track {
-            height: 8px;
-            width: 100%;
-            background: #e0e0e0;
-            border: 2px solid var(--primary);
-            border-radius: 0px;
-            overflow: hidden;
-            position: relative;
-        }
+    .category-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      position: sticky;
+      top: var(--header-h);
+      z-index: 180;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .category-bar::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 15px;
+      border-radius: var(--pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .cat-pill:hover {
+      background: var(--bg-card-hover);
+    }
+    .cat-pill.active {
+      background: var(--cream);
+      color: var(--bg);
+      border-color: var(--cream);
+      box-shadow: 0 2px 10px rgba(224, 74, 47, 0.3);
+    }
 
-        .loader-bar {
-            height: 100%;
-            width: 0%;
-            background: var(--primary);
-            border-radius: 0px;
-            transition: width 0.1s ease;
-        }
+    .main-wrap {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 20px 16px calc(var(--bottom-h) + var(--safe-bottom) + 20px);
+    }
 
-        #loading-text {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 7px;
-            color: var(--text-muted);
-            margin-top: 10px;
-        }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-count {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--cream-dim);
+    }
 
-        /* --- CLASSIC PIXEL HUD --- */
-        #hud {
-            position: absolute;
-            top: 30px;
-            left: 0;
-            width: 100%;
-            padding: 0 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 5;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 14px;
-            color: var(--text-light);
-            letter-spacing: 1px;
-            text-shadow: none;
-        }
+    .ctrl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: var(--pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+    .ctrl-btn:hover { background: var(--bg-card-hover); }
+    .ctrl-btn.solid {
+      background: var(--cream);
+      color: var(--bg);
+      border-color: var(--cream);
+    }
+    .ctrl-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
-        #hud.visible {
-            opacity: 1;
-        }
+    .videos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+      gap: 20px 16px;
+    }
+    .video-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: transform 0.18s ease;
+    }
+    .video-card:hover {
+      transform: translateY(-5px);
+    }
+    .video-card:hover .thumb-wrap {
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(244, 213, 154, 0.12);
+    }
+    body.cream-theme .video-card:hover .thumb-wrap {
+      box-shadow: 0 12px 28px rgba(139, 46, 26, 0.2), 0 0 0 1px rgba(201, 61, 33, 0.15);
+    }
+    .video-card:active {
+      transform: scale(0.98);
+    }
 
-        .hud-left {
-            display: flex;
-            gap: 20px;
-            pointer-events: auto;
-        }
+    .thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-subtle);
+      box-shadow: var(--shadow);
+    }
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .video-card:hover .thumb-wrap img {
+      transform: scale(1.04);
+    }
 
-        .hud-right {
-            display: flex;
-            gap: 24px;
-            pointer-events: auto;
-        }
+    .badge-duration {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .badge-cat {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: var(--accent);
+      color: #F4D59A;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: var(--pill);
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+    body.cream-theme .badge-cat {
+      background: var(--accent);
+      color: #F4D59A;
+    }
+    .badge-quality {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
 
-        /* --- STATS PANEL --- */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
+    .card-info {
+      margin-top: 8px;
+    }
+    .card-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: var(--cream);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--cream-dim);
+      margin-top: 3px;
+    }
 
-        .stat-card {
-            background: #f7f7f7;
-            border: 2px solid var(--primary);
-            border-radius: 0px;
-            padding: 12px;
-        }
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 24px 18px;
+    }
+    .cat-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease;
+      padding-top: 8px;
+    }
+    .cat-card:hover { transform: translateY(-4px); }
+    .cat-card:active { transform: scale(0.98); }
 
-        .stat-card .val {
-            font-size: 0.9rem;
-            font-weight: 400;
-            color: var(--text-light);
-            font-family: 'Press Start 2P', monospace;
-        }
+    .cat-stack {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+    }
+    .cat-stack-back {
+      position: absolute;
+      top: -6px;
+      left: 6%;
+      width: 88%;
+      height: 100%;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      opacity: 0.6;
+    }
+    .cat-stack-front {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-subtle);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-stack-front img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .cat-card:hover .cat-stack-front img {
+      transform: scale(1.04);
+    }
+    .cat-placeholder {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--cream);
+      opacity: 0.7;
+      letter-spacing: 1px;
+    }
 
-        .stat-card .lbl {
-            font-size: 7px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 6px;
-            font-family: 'Press Start 2P', monospace;
-        }
+    .cat-overlay {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 42%;
+      background: linear-gradient(to right, transparent, rgba(26, 18, 16, 0.92));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #F4D59A;
+      padding: 8px;
+      text-align: center;
+    }
+    body.cream-theme .cat-overlay {
+      background: linear-gradient(to right, transparent, rgba(139, 46, 26, 0.9));
+      color: #F4D59A;
+    }
+    .cat-overlay-count {
+      font-size: 13.5px;
+      font-weight: 800;
+    }
+    .cat-overlay-label {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      font-weight: 700;
+    }
 
-        /* --- CONTROLS OVERLAY ON SCREEN --- */
-        .controls-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin: 20px 0;
-            font-size: 7px;
-            color: var(--text-muted);
-            font-family: 'Press Start 2P', monospace;
-            line-height: 1.6;
-        }
+    .cat-info-row {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .cat-icon-bubble {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--cream);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 900;
+      font-size: 14px;
+    }
+    .cat-name {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--cream);
+    }
+    .cat-count-sub {
+      font-size: 12px;
+      color: var(--cream-dim);
+    }
 
-        .control-key {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+    .cat-hub-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+    .cat-hub-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .cat-hub-thumb {
+      width: 120px;
+      aspect-ratio: 16/9;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-hub-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cat-hub-text h2 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--cream);
+    }
+    .cat-hub-text p {
+      font-size: 12.5px;
+      color: var(--cream-dim);
+      margin-top: 2px;
+    }
 
-        .key-cap {
-            background: var(--bg-dark);
-            border: 2px solid var(--primary);
-            color: var(--text-light);
-            padding: 3px 7px;
-            border-radius: 0px;
-            font-weight: 400;
-            font-size: 6px;
-            font-family: 'Press Start 2P', monospace;
-        }
+    .player-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .player-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .player-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+    }
+    .video-screen-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #000;
+      box-shadow: var(--shadow);
+    }
+    .video-screen-box iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .video-screen-box .player-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #fff;
+      background: #111;
+      padding: 20px;
+      text-align: center;
+    }
+    .video-screen-box .player-fallback a {
+      color: var(--cream);
+      font-weight: 700;
+      text-decoration: underline;
+    }
 
-        /* --- GAME OVER RETRY BUTTON --- */
-        .btn-retry {
-            width: 64px;
-            height: 64px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            transition: transform 0.2s ease;
-            margin: 20px auto 0 auto;
-            outline: none;
-        }
+    .watch-title {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+      color: var(--cream);
+      margin-top: 14px;
+    }
+    .watch-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .watch-stats {
+      font-size: 12.5px;
+      color: var(--cream-dim);
+    }
 
-        .btn-retry:hover {
-            transform: scale(1.2) rotate(45deg);
-        }
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: var(--pill);
+      background: var(--cream);
+      color: var(--bg);
+      border: none;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .share-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+    .share-btn:active {
+      transform: scale(0.97);
+    }
 
-        .btn-retry:active {
-            transform: scale(0.9);
-        }
+    .up-next-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--cream);
+      margin-bottom: 10px;
+    }
+    .up-next-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .up-card {
+      display: flex;
+      gap: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 4px;
+      transition: background 0.15s;
+    }
+    .up-card:hover { background: var(--bg-card-hover); }
+    .up-thumb {
+      width: 110px;
+      aspect-ratio: 16/9;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--bg-subtle);
+      position: relative;
+    }
+    .up-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .up-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .up-t {
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: var(--cream);
+    }
+    .up-m {
+      font-size: 11px;
+      color: var(--cream-dim);
+      margin-top: 2px;
+    }
 
-        .btn-retry svg {
-            width: 38px;
-            height: 38px;
-            fill: currentColor;
-        }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .hist-card {
+      display: flex;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      align-items: center;
+    }
+    .hist-card:hover { background: var(--bg-card-hover); }
+    .hist-thumb {
+      width: 130px;
+      aspect-ratio: 16/9;
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--bg-subtle);
+    }
+    .hist-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .hist-info { flex: 1; min-width: 0; }
+    .hist-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cream);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .hist-meta {
+      font-size: 12px;
+      color: var(--cream-dim);
+      margin-top: 3px;
+    }
 
-        /* --- MOBILE CONTROLS --- */
-        #mobile-controls {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            width: 100%;
-            padding: 0 30px;
-            display: none;
-            justify-content: center;
-            gap: 15px;
-            z-index: 5;
-        }
+    .account-hub-container {
+      max-width: 720px;
+      margin: 30px auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 38px 28px 30px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .coming-soon-pill {
+      display: inline-block;
+      background: var(--cream);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      padding: 5px 16px;
+      border-radius: var(--pill);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .avatar-ring {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid rgba(252, 236, 200, 0.4);
+      background: var(--bg-card-inner);
+      color: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+    .hub-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--cream);
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .hub-desc {
+      font-size: 13.5px;
+      color: var(--cream-dim);
+      line-height: 1.5;
+      margin-bottom: 26px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .feature-card {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .feature-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--cream);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .feature-text h4 {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--cream);
+      margin-bottom: 2px;
+    }
+    .feature-text p {
+      font-size: 12px;
+      color: var(--cream-dim);
+    }
 
-        .mobile-btn {
-            width: 65px;
-            height: 65px;
-            border-radius: 0px;
-            background: var(--bg-dark);
-            border: 2px solid var(--primary);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: var(--primary);
-            font-size: 1.2rem;
-            font-weight: bold;
-            box-shadow: 3px 3px 0px var(--secondary);
-            pointer-events: auto;
-            touch-action: manipulation;
-        }
+    .ads-toggle-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: var(--pill);
+      margin-bottom: 24px;
+    }
+    .ads-toggle-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cream);
+    }
+    .switch-track {
+      width: 44px;
+      height: 24px;
+      background: rgba(252, 236, 200, 0.3);
+      border-radius: var(--pill);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .switch-track.on {
+      background: var(--cream);
+    }
+    .switch-thumb {
+      width: 18px;
+      height: 18px;
+      background: var(--bg);
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s ease;
+    }
+    .switch-track.on .switch-thumb {
+      transform: translateX(20px);
+    }
+    .switch-status-text {
+      font-size: 12.5px;
+      color: var(--cream-dim);
+      min-width: 22px;
+    }
 
-        .mobile-btn:active {
-            background: var(--primary);
-            color: #f7f7f7;
-            box-shadow: none;
-            transform: translate(1px, 1px);
-        }
+    .hub-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-        /* --- SETTINGS DROPDOWN --- */
-        #settings-dropdown {
-            background: var(--bg-dark) !important;
-            border: 2px solid var(--primary) !important;
-            border-radius: 0px !important;
-            box-shadow: 4px 4px 0px var(--primary) !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--bottom-h) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: none;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 240;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .bottom-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--cream-dim);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      gap: 3px;
+      transition: color 0.15s;
+      font-family: inherit;
+    }
+    .bottom-item.active {
+      color: var(--cream);
+      font-weight: 800;
+    }
+    .bottom-item.active .icon {
+      transform: scale(1.12);
+    }
 
-        .icon-btn {
-            background: transparent !important;
-            border: none !important;
-            color: var(--primary) !important;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.2s ease;
-        }
+    .empty-box {
+      text-align: center;
+      padding: 40px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 20px 0;
+    }
+    .empty-box h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--cream);
+      margin-bottom: 6px;
+    }
+    .empty-box p {
+      font-size: 13px;
+      color: var(--cream-dim);
+      margin-bottom: 14px;
+    }
 
-        .icon-btn:hover {
-            transform: scale(1.1);
-        }
+    .loading-box {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--cream-dim);
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--cream);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-        .btn-toggle {
-            background: var(--bg-dark) !important;
-            border: 2px solid var(--primary) !important;
-            color: var(--primary) !important;
-            font-weight: 400 !important;
-            font-size: 6px !important;
-            cursor: pointer;
-            text-transform: uppercase;
-            padding: 5px 10px !important;
-            border-radius: 0px !important;
-            transition: all 0.15s ease !important;
-            font-family: 'Press Start 2P', monospace !important;
-            box-shadow: 2px 2px 0px var(--secondary);
-        }
+    .load-more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
 
-        .btn-toggle.active {
-            background: var(--primary) !important;
-            color: #f7f7f7 !important;
-            box-shadow: none !important;
-            transform: translate(1px, 1px);
-        }
+    .toast-box {
+      position: fixed;
+      bottom: calc(var(--bottom-h) + var(--safe-bottom) + 14px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--cream);
+      color: var(--bg);
+      padding: 9px 22px;
+      border-radius: var(--pill);
+      font-size: 13px;
+      font-weight: 800;
+      z-index: 1000;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: popToast 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popToast {
+      from { transform: translate(-50%, 15px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
 
-        /* --- AUDIO TOGGLE --- */
-        .top-buttons {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 15;
-        }
+    @media (max-width: 860px) {
+      .desktop-nav { display: none; }
+      .bottom-nav { display: flex; }
+      .player-layout { grid-template-columns: 1fr; }
+    }
 
-        @media (max-width: 768px) {
-            #mobile-controls {
-                display: flex;
-            }
-            h1 {
-                font-size: 14px;
-            }
-            .glass-panel {
-                padding: 20px 15px;
-            }
-            #hud {
-                padding: 0 20px !important;
-                font-size: 10px !important;
-                top: 15px !important;
-            }
-            .top-buttons {
-                top: 10px !important;
-                left: 10px !important;
-            }
-            #settings-dropdown {
-                top: 45px !important;
-                left: 0 !important;
-                width: 200px !important;
-            }
-            .icon-btn {
-                width: 36px !important;
-                height: 36px !important;
-            }
-            .mobile-btn {
-                width: 55px !important;
-                height: 55px !important;
-                font-size: 0.95rem !important;
-            }
-        }
+    @media (max-width: 680px) {
+      .header {
+        height: 60px;
+        padding: 0 12px;
+        gap: 10px;
+      }
+      .brand-logo-img {
+        height: 38px;
+        max-width: 110px;
+      }
+      .header-search {
+        width: auto;
+        flex: 1;
+      }
+      .header-search:focus-within {
+        width: auto;
+      }
+      .main-wrap {
+        padding: 14px 10px calc(var(--bottom-h) + var(--safe-bottom) + 14px);
+      }
+      .videos-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .cat-hub-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .cat-hub-left {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+      .cat-hub-thumb {
+        width: 100%;
+      }
+      .hist-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .hist-thumb {
+        width: 100%;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      .account-hub-container {
+        padding: 28px 18px;
+        margin: 16px auto;
+      }
+    }
 
-        /* --- SPEED VIGNETTE (motion sensation at high velocity) --- */
-        #speed-vignette {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 8;
-            pointer-events: none;
-            opacity: 0;
-            background: radial-gradient(ellipse at center, rgba(247,247,247,0) 55%, rgba(60,50,45,0.2) 100%);
-            transition: opacity 0.4s ease;
-        }
+    .player-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: var(--pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+      font-family: inherit;
+    }
+    .action-pill:hover { background: var(--bg-card-hover); }
+    .action-pill:active { transform: scale(0.97); }
+    .action-pill.solid {
+      background: var(--cream);
+      color: var(--bg);
+      border-color: var(--cream);
+    }
+    .action-pill.liked {
+      background: var(--cream);
+      color: var(--bg);
+      border-color: var(--cream);
+    }
+    .action-pill.liked .icon { color: #e11d48; }
+    body.cream-theme .action-pill.liked .icon { color: #be123c; }
+    .action-pill.ads-pill {
+      padding: 0 12px;
+      gap: 8px;
+    }
+    .action-pill .ads-toggle-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: inherit;
+    }
+    .action-pill .switch-status-text {
+      font-size: 12px;
+      color: var(--cream-dim);
+      min-width: 22px;
+    }
+    .cat-stack-front img {
+      background: var(--bg-subtle);
+    }
 
-        /* --- FILM GRAIN (Cinematic Projector Jitter) --- */
-        #film-grain {
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            width: calc(100% + 10px);
-            height: calc(100% + 10px);
-            z-index: 9;
-            pointer-events: none;
-            opacity: 0.035; /* Finer, subtle cinematic opacity */
-            background-repeat: repeat;
-            animation: grain-jitter 0.12s steps(6) infinite;
-        }
 
-        @keyframes grain-jitter {
-            0%, 100% { transform: translate(0, 0); }
-            10% { transform: translate(-0.5px, 0.5px); }
-            20% { transform: translate(0.5px, -0.5px); }
-            30% { transform: translate(-0.5px, -0.5px); }
-            40% { transform: translate(0.5px, 0.5px); }
-            50% { transform: translate(-0.5px, 1px); }
-            60% { transform: translate(0.5px, -0.5px); }
-            70% { transform: translate(-1px, -0.5px); }
-            80% { transform: translate(1px, 0.5px); }
-            90% { transform: translate(-0.5px, -0.5px); }
-        }
+    .section-title,
+    .watch-title,
+    .hub-title,
+    .cat-name,
+    .card-title,
+    .hist-title,
+    .up-t,
+    .cat-hub-text h2 {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .section-title { font-size: 22px; font-weight: 700; }
+    .watch-title { font-size: 22px; font-weight: 700; }
+    .hub-title { font-size: 28px; font-weight: 700; }
+    .brand-wrap { font-family: var(--font-display); }
 
-        /* --- MILESTONE POPUP --- */
-        #milestone-popup {
-            position: absolute;
-            top: 25%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: var(--bg-dark);
-            border: 3px solid var(--primary);
-            border-radius: 0px;
-            padding: 15px 30px;
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
-            box-shadow: 6px 6px 0px var(--primary);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.35);
-            opacity: 0;
-        }
-
-        #milestone-popup.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-
-        #milestone-title {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 8px;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-            text-shadow: none;
-        }
-
-        #milestone-value {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 14px;
-            color: var(--text-light);
-            font-weight: bold;
-            text-shadow: none;
-        }
-
-        /* --- ROTATE DEVICE OVERLAY FOR PORTRAIT MOBILE --- */
-        #rotate-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #f7f7f7;
-            color: #535353;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            font-family: 'Press Start 2P', monospace;
-        }
-
-        @keyframes rotate-phone {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(0deg); }
-        }
-
-        @media (max-width: 768px) and (orientation: portrait) {
-            #rotate-overlay {
-                display: flex;
-            }
-        }
-    </style>
+  </style>
 </head>
 <body>
 
-    <!-- Rotate Warning Overlay -->
-    <div id="rotate-overlay">
-        <svg viewBox="0 0 24 24" style="width: 50px; height: 50px; fill: #535353; margin-bottom: 25px; animation: rotate-phone 2s infinite ease-in-out;">
-            <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3-3H7V4h10v14z"/>
-        </svg>
-        <div style="font-size: 8px; line-height: 1.8; letter-spacing: 1px; text-transform: uppercase;">Please Rotate<br>Your Device</div>
+  <header class="header">
+    <div class="brand-wrap" onclick="app.navigate('home')">
+      <img src="logo.png" alt="p0rn logo" class="brand-logo-img" onerror="this.style.display='none'" />
     </div>
 
-    <!-- Film Grain Overlay for Cinematic Film feel -->
-    <div id="film-grain"></div>
+    <nav class="desktop-nav" id="desktopNav"></nav>
 
-    <!-- Milestone Alert Popup -->
-    <div id="milestone-popup" class="hidden">
-        <div id="milestone-title">MILESTONE!</div>
-        <div id="milestone-value">+100 PTS</div>
-    </div>
-
-    <!-- Canvas for Three.js -->
-    <div id="canvas-container"></div>
-    <div id="speed-vignette"></div>
-
-    <!-- Settings Button and Floating Panel (Top Left) -->
-    <div class="top-buttons">
-        <button id="btn-settings" class="icon-btn" title="Settings">
-            <svg viewBox="0 0 24 24" style="width:22px; height:22px; fill:currentColor;">
-                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.13,5.91,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-            </svg>
+    <div class="header-actions">
+      <div class="header-search">
+        <span class="icon">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </span>
+        <input type="text" id="searchInput" placeholder="Search p0rn..." autocomplete="off" />
+        <button class="clear-btn" id="clearBtn" onclick="app.clearSearch()" style="display:none;" aria-label="Clear">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
-        
-        <!-- Settings Dropdown Panel (hidden by default) -->
-        <div id="settings-dropdown" class="glass-panel hidden" style="position: absolute; top: 55px; left: 0; width: 220px; padding: 15px; text-align: left; z-index: 20; display: flex; flex-direction: column; gap: 12px;">
-            <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 2px solid var(--primary); padding-bottom: 6px; font-family: 'Press Start 2P', monospace; margin-bottom: 4px;">Settings</div>
-            
-            <!-- Camera View Settings -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Camera:</span>
-                <div style="display: flex; gap: 4px;">
-                    <button id="cam-side" class="btn-toggle active" style="flex: 1; padding: 5px 0;">Side</button>
-                    <button id="cam-follow" class="btn-toggle" style="flex: 1; padding: 5px 0;">3D View</button>
-                </div>
-            </div>
+      </div>
 
-            <!-- Zoom Settings -->
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Zoom:</span>
-                <div style="display: flex; gap: 4px;">
-                    <button id="zoom-normal" class="btn-toggle" style="flex: 1; padding: 5px 0;">Close</button>
-                    <button id="zoom-wide" class="btn-toggle active" style="flex: 1; padding: 5px 0;">Wide</button>
-                </div>
-            </div>
-            
-            <!-- Scroll Zoom Settings -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Scroll Zoom:</span>
-                <button id="btn-scroll-zoom" class="btn-toggle active" style="padding: 4px 10px;">ON</button>
-            </div>
-            
-            <!-- Audio Settings -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                <span style="font-size: 7px; color: var(--text-muted); text-transform: uppercase; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">Sound:</span>
-                <button id="btn-audio" class="btn-toggle active" style="padding: 4px 10px;">ON</button>
-            </div>
-        </div>
+      <button class="theme-circle-btn" onclick="app.toggleTheme()" aria-label="Toggle Theme" title="Toggle theme">
+        <span class="icon" id="themeIcon">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>
+        </span>
+      </button>
     </div>
+  </header>
 
-    <!-- HUD (Heads-Up Display) -->
-    <div id="hud">
-        <div class="hud-left">
-            <!-- AMBER removed to match Chrome Dino style -->
+  <div class="category-bar" id="categoryBar"></div>
+
+  <main class="main-wrap" id="mainContainer"></main>
+
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
+  <div id="toastBox"></div>
+
+  <script>
+  /* ==========================================================================
+     XVIDAPI CLIENT
+     ========================================================================== */
+  /* Calls YOUR backend only — upstream URL is not exposed */
+  const API_BASE = "/api/vod";
+
+  async function apiFetch(params = {}) {
+    const q = new URLSearchParams({ at: "json", ...params });
+    const url = `${API_BASE}?${q.toString()}`;
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+      credentials: "same-origin",
+      cache: "default"
+    });
+    if (!res.ok) throw new Error("API " + res.status);
+    const data = await res.json();
+    if (data.code !== 1) throw new Error(data.msg || "API error");
+    return data;
+  }
+
+  function normalizeVideo(raw) {
+    const cat = Array.isArray(raw.category) && raw.category.length
+      ? raw.category[0]
+      : (raw.type_name || "Video");
+    let embed = "";
+    try {
+      const ep = raw.episodes && raw.episodes.server_data;
+      if (ep) {
+        const keys = Object.keys(ep);
+        if (keys.length) embed = ep[keys[0]].link_embed || "";
+      }
+    } catch (_) {}
+    const thumb = raw.thumb_url || raw.poster_url || "";
+    const poster = raw.poster_url || raw.thumb_url || "";
+    return {
+      id: raw.id,
+      title: (raw.name || raw.source_vod_name || "Untitled").replace(/&amp;/g, "&").replace(/&bull;/g, "•"),
+      duration: raw.time || "—",
+      category: cat,
+      catSlug: String(raw.type_id || cat).toLowerCase().replace(/\s+/g, "-"),
+      typeId: raw.type_id || null,
+      views: raw.quality || "HD",
+      ago: formatAgo(raw.vod_pubdate || raw.created_at || raw.vod_time),
+      thumbnail: thumb,
+      poster: poster,
+      embed: embed,
+      actors: Array.isArray(raw.actor) ? raw.actor.filter(a => a && a !== "Updating") : [],
+      quality: raw.quality || "",
+      year: raw.year || "",
+      tags: (raw.tag || "").split(",").map(t => t.trim()).filter(Boolean)
+    };
+  }
+
+  function formatAgo(dateStr) {
+    if (!dateStr) return "Recently";
+    try {
+      const d = new Date(dateStr.replace(" ", "T"));
+      if (isNaN(d.getTime())) return dateStr.slice(0, 10);
+      const diff = Date.now() - d.getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return mins <= 1 ? "Just now" : mins + " min ago";
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + " hour" + (hrs > 1 ? "s" : "") + " ago";
+      const days = Math.floor(hrs / 24);
+      if (days < 30) return days + " day" + (days > 1 ? "s" : "") + " ago";
+      return dateStr.slice(0, 10);
+    } catch {
+      return dateStr.slice(0, 10);
+    }
+  }
+
+  /* ==========================================================================
+     APP CONTROLLER
+     ========================================================================== */
+  class P0rnApp {
+    constructor() {
+      this.tab = "home";
+      this.activeCat = "all";      // "all" or type_id string
+      this.selectedCat = null;     // category object when in hub
+      this.activeVideo = null;
+      this.query = "";
+      this.history = JSON.parse(localStorage.getItem("p0rn_hist") || "[]");
+      this.likes = JSON.parse(localStorage.getItem("p0rn_likes") || "[]");
+      this.adsEnabled = localStorage.getItem("p0rn_ads") !== "false";
+      this.creamTheme = localStorage.getItem("p0rn_cream") === "true";
+
+      this.categories = [];
+      this.videos = [];
+      this.page = 1;
+      this.pagecount = 1;
+      this.total = 0;
+      this.loading = false;
+      this.searchTimer = null;
+
+      this.init();
+    }
+
+    async init() {
+      this.applyTheme();
+      this.renderNav();
+      this.bindSearch();
+      this.showLoading("Loading categories…");
+      try {
+        await this.loadCategories();
+        this.renderCategoryBar();
+        this.navigate("home");
+      } catch (e) {
+        console.error(e);
+        this.showError("Failed to load API. Please refresh.");
+      }
+
+      window.addEventListener("popstate", () => {
+        if (this.activeVideo) this.closePlayer();
+        else if (this.selectedCat) this.closeCategoryHub();
+      });
+    }
+
+    async loadCategories() {
+      const data = await apiFetch({ ac: "list" });
+      this.categories = (data.class || [])
+        .filter(c => c.type_name && !["Xvidapi", "Unknown"].includes(c.type_name))
+        .map(c => ({
+          id: c.type_id,
+          slug: String(c.type_id),
+          name: c.type_name,
+          count: null,
+          thumb: null,
+          loadingMeta: false
+        }));
+    }
+
+    async enrichCategoryMeta(cat) {
+      if (!cat || cat.count != null || cat.loadingMeta) return;
+      cat.loadingMeta = true;
+      try {
+        const result = await this.fetchVideos({ page: 1, typeId: cat.id });
+        cat.count = result.total || 0;
+        const first = result.list && result.list[0];
+        if (first) cat.thumb = first.thumbnail || first.poster || null;
+      } catch (e) {
+        console.warn("meta fail", cat.name, e);
+        cat.count = cat.count ?? 0;
+      } finally {
+        cat.loadingMeta = false;
+      }
+    }
+
+    async enrichAllCategoryMetas() {
+      const priority = ["Indian","Amateur","Teen","MILF","Latina","Asian Woman","Japanese","Lesbian","Anal","Big Tits","Exotic","Interracial"];
+      const pending = this.categories.filter(c => c.count == null)
+        .sort((a,b) => {
+          const ia = priority.indexOf(a.name); const ib = priority.indexOf(b.name);
+          return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        });
+      const concurrency = 10;
+      for (let i = 0; i < pending.length; i += concurrency) {
+        const batch = pending.slice(i, i + concurrency);
+        await Promise.all(batch.map(c => this.enrichCategoryMeta(c)));
+        if (this.tab === "category" && !this.selectedCat) {
+          this.renderCategories(true);
+        }
+      }
+    }
+
+    async fetchVideos({ page = 1, typeId = null, keyword = null } = {}) {
+      const params = { ac: "detail", pg: String(page) };
+      if (typeId && typeId !== "all") params.t = String(typeId);
+      if (keyword) params.wd = keyword;
+      const data = await apiFetch(params);
+      const list = (data.list || []).map(normalizeVideo).filter(v => v.id);
+      return {
+        list,
+        page: data.page || page,
+        pagecount: data.pagecount || 1,
+        total: data.total || list.length
+      };
+    }
+
+    /* Theme */
+    applyTheme() {
+      const icon = document.getElementById("themeIcon");
+      if (this.creamTheme) {
+        document.body.classList.add("cream-theme");
+        if (icon) {
+          icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>';
+        }
+      } else {
+        document.body.classList.remove("cream-theme");
+        if (icon) {
+          icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>';
+        }
+      }
+      const btnText = document.getElementById("themeBtnText");
+      if (btnText) {
+        btnText.textContent = this.creamTheme ? "Theme: Honey Butter" : "Theme: Ember Night";
+      }
+    }
+
+    toggleTheme() {
+      const btn = document.querySelector(".theme-circle-btn");
+      if (btn) {
+        btn.classList.add("spin-anim");
+        setTimeout(() => btn.classList.remove("spin-anim"), 460);
+      }
+      this.creamTheme = !this.creamTheme;
+      localStorage.setItem("p0rn_cream", this.creamTheme);
+      this.applyTheme();
+      this.toast(this.creamTheme ? "Honey Butter theme" : "Ember Night theme");
+      if (this.tab === "account") this.renderAccount();
+    }
+
+    toggleAds() {
+      this.adsEnabled = !this.adsEnabled;
+      localStorage.setItem("p0rn_ads", this.adsEnabled);
+      if (this.tab === "account") this.renderAccount();
+      this.toast(this.adsEnabled ? "Ads preference: On" : "Ads preference: Off");
+    }
+
+    /* Player-only toggles — preference only, no skip controls. Embed shows whatever API gives. */
+    toggleThemeFromPlayer() {
+      if (this._themeGestureLock) {
+        this.toast("Wait 5s…");
+        return;
+      }
+      const btn = document.querySelector(".player-wrap .theme-circle-btn");
+      if (btn) {
+        btn.classList.add("spin-anim");
+        setTimeout(() => btn.classList.remove("spin-anim"), 460);
+      }
+      this.creamTheme = !this.creamTheme;
+      localStorage.setItem("p0rn_cream", this.creamTheme);
+      this.applyTheme();
+      this.toast(this.creamTheme ? "Honey Butter" : "Ember Night");
+      const icon = document.getElementById("playerThemeIcon");
+      if (icon) {
+        icon.innerHTML = this.creamTheme
+          ? '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>';
+      }
+      this._themeGestureLock = true;
+      setTimeout(() => { this._themeGestureLock = false; }, 5000);
+    }
+
+    toggleAdsFromPlayer() {
+      this.adsEnabled = !this.adsEnabled;
+      localStorage.setItem("p0rn_ads", this.adsEnabled);
+      const track = document.querySelector(".player-wrap .switch-track");
+      const status = document.getElementById("playerAdsStatus");
+      if (track) track.classList.toggle("on", this.adsEnabled);
+      if (status) status.textContent = this.adsEnabled ? "On" : "Off";
+      this.toast(this.adsEnabled ? "Ads preference: On" : "Ads preference: Off");
+    }
+
+    isLiked(id) {
+      return this.likes.some(x => x.id === id);
+    }
+
+    toggleLike(id) {
+      const v = this.activeVideo || this.videos.find(x => x.id === id);
+      if (!v) return;
+      if (this.isLiked(id)) {
+        this.likes = this.likes.filter(x => x.id !== id);
+        this.toast("Removed from likes");
+      } else {
+        this.likes.unshift({
+          id: v.id,
+          title: v.title,
+          thumbnail: v.thumbnail || v.poster,
+          duration: v.duration,
+          category: v.category
+        });
+        if (this.likes.length > 100) this.likes.pop();
+        this.toast("Liked ❤️");
+      }
+      localStorage.setItem("p0rn_likes", JSON.stringify(this.likes));
+      const btn = document.getElementById("likeBtn");
+      if (btn) {
+        const on = this.isLiked(id);
+        btn.classList.toggle("liked", on);
+        btn.querySelector(".like-label").textContent = on ? "Liked" : "Like";
+      }
+    }
+
+
+    /* Nav */
+    renderNav() {
+      const tabs = [
+        {
+          id: "home",
+          label: "Home",
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
+        },
+        {
+          id: "category",
+          label: "Category",
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>'
+        },
+        {
+          id: "history",
+          label: "History",
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>'
+        },
+        {
+          id: "account",
+          label: "Account",
+          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
+        }
+      ];
+
+      document.getElementById("desktopNav").innerHTML = tabs.map(t =>
+        `<button class="nav-tab ${this.tab === t.id ? "active" : ""}" onclick="app.navigate('${t.id}')">
+          <span class="icon">${t.icon}</span>
+          <span>${t.label}</span>
+        </button>`
+      ).join("");
+
+      document.getElementById("bottomNav").innerHTML = tabs.map(t =>
+        `<button class="bottom-item ${this.tab === t.id ? "active" : ""}" onclick="app.navigate('${t.id}')">
+          <span class="icon">${t.icon}</span>
+          <span>${t.label}</span>
+        </button>`
+      ).join("");
+    }
+
+    renderCategoryBar() {
+      const bar = document.getElementById("categoryBar");
+      if (this.tab !== "home" || this.activeVideo || this.selectedCat) {
+        bar.style.display = "none";
+        return;
+      }
+      bar.style.display = "flex";
+
+      // Top: Desi / Bhabhi style keyword pills (search API)
+      const hotKeywords = [
+        { label: "Desi Bhabhi", kw: "desi bhabhi" },
+        { label: "Bhabhi", kw: "bhabhi" },
+        { label: "Desi", kw: "desi" },
+        { label: "Aunty", kw: "aunty" },
+        { label: "Indian Hot", kw: "indian hot" },
+        { label: "Mallu", kw: "mallu" },
+        { label: "Hindi", kw: "hindi" }
+      ];
+
+      // Then viral API categories
+      const popular = [
+        "Indian", "Amateur", "Teen", "MILF", "Latina", "Asian Woman", "Japanese",
+        "Lesbian", "Anal", "Big Tits", "Exotic", "Interracial", "Pornstar",
+        "Real Amateur", "Blowjob", "Creampie", "Gangbang", "Virtual Reality", "AI", "Cam Porn"
+      ];
+      const barCats = [];
+      const seen = new Set();
+      popular.forEach(name => {
+        const c = this.categories.find(x => x.name === name);
+        if (c && !seen.has(c.id)) { barCats.push(c); seen.add(c.id); }
+      });
+      // More categories further down the bar
+      this.categories.forEach(c => {
+        if (barCats.length >= 28) return;
+        if (!seen.has(c.id)) { barCats.push(c); seen.add(c.id); }
+      });
+
+      let html = `<div class="cat-pill ${this.activeCat === "all" && !this.query ? "active" : ""}" onclick="app.filterCategory('all')">
+        <span>All</span>
+      </div>`;
+
+      hotKeywords.forEach(h => {
+        const key = "kw:" + h.kw;
+        const active = this.activeCat === key || (this.query && this.query.toLowerCase() === h.kw);
+        html += `<div class="cat-pill ${active ? "active" : ""}" onclick="app.filterKeyword('${this.esc(h.kw)}')">
+          <span>${this.esc(h.label)}</span>
+        </div>`;
+      });
+
+      barCats.forEach(c => {
+        html += `<div class="cat-pill ${this.activeCat === String(c.id) ? "active" : ""}" onclick="app.filterCategory('${c.id}')">
+          <span>${this.esc(c.name)}</span>
+        </div>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    async filterCategory(slug) {
+      this.activeCat = slug;
+      this.query = "";
+      document.getElementById("searchInput").value = "";
+      document.getElementById("clearBtn").style.display = "none";
+      this.page = 1;
+      this.videos = [];
+      this.renderCategoryBar();
+      await this.loadAndRenderHome();
+    }
+
+    async filterKeyword(kw) {
+      this.activeCat = "kw:" + kw;
+      this.query = kw;
+      document.getElementById("searchInput").value = kw;
+      document.getElementById("clearBtn").style.display = "flex";
+      this.page = 1;
+      this.videos = [];
+      if (this.tab !== "home") {
+        this.tab = "home";
+        this.renderNav();
+      }
+      this.renderCategoryBar();
+      await this.loadAndRenderHome();
+    }
+
+    navigate(tab) {
+      this.tab = tab;
+      this.activeVideo = null;
+      this.selectedCat = null;
+      this.renderNav();
+      this.renderCategoryBar();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      if (tab === "home") this.loadAndRenderHome();
+      else if (tab === "category") {
+        this.renderCategories(false);
+      }
+      else if (tab === "history") this.renderHistory();
+      else if (tab === "account") this.renderAccount();
+    }
+
+    bindSearch() {
+      const input = document.getElementById("searchInput");
+      const clear = document.getElementById("clearBtn");
+
+      input.addEventListener("input", e => {
+        this.query = e.target.value.trim();
+        clear.style.display = this.query ? "flex" : "none";
+        clearTimeout(this.searchTimer);
+        this.searchTimer = setTimeout(() => {
+          if (this.tab !== "home") {
+            this.tab = "home";
+            this.renderNav();
+          }
+          this.page = 1;
+          this.videos = [];
+          this.renderCategoryBar();
+          this.loadAndRenderHome();
+        }, 420);
+      });
+
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          clearTimeout(this.searchTimer);
+          this.page = 1;
+          this.videos = [];
+          this.loadAndRenderHome();
+        }
+      });
+    }
+
+    clearSearch() {
+      this.query = "";
+      this.activeCat = "all";
+      document.getElementById("searchInput").value = "";
+      document.getElementById("clearBtn").style.display = "none";
+      this.page = 1;
+      this.videos = [];
+      this.renderCategoryBar();
+      this.loadAndRenderHome();
+    }
+
+    toast(msg) {
+      const box = document.getElementById("toastBox");
+      const el = document.createElement("div");
+      el.className = "toast-box";
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        setTimeout(() => el.remove(), 250);
+      }, 2200);
+    }
+
+    showLoading(msg = "Loading…") {
+      document.getElementById("mainContainer").innerHTML = `
+        <div class="loading-box">
+          <div class="spinner"></div>
+          <p>${this.esc(msg)}</p>
+        </div>`;
+    }
+
+    showError(msg) {
+      document.getElementById("mainContainer").innerHTML = `
+        <div class="empty-box">
+          <h3>Something went wrong</h3>
+          <p>${this.esc(msg)}</p>
+          <button class="ctrl-btn solid" onclick="location.reload()">Retry</button>
+        </div>`;
+    }
+
+    card(v) {
+      const thumb = v.thumbnail || v.poster || "";
+      const img = thumb
+        ? `<img src="${this.esc(thumb)}" alt="${this.esc(v.title)}" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+        : `<div class="cat-placeholder">▶</div>`;
+      return `
+        <div class="video-card" onclick="app.playVideo(${v.id})">
+          <div class="thumb-wrap">
+            ${img}
+            <span class="badge-cat">${this.esc(v.category)}</span>
+            ${v.quality ? `<span class="badge-quality">${this.esc(v.quality)}</span>` : ""}
+            <span class="badge-duration">${this.esc(v.duration)}</span>
+          </div>
+          <div class="card-info">
+            <h3 class="card-title">${this.esc(v.title)}</h3>
+            <div class="card-meta">${this.esc(v.views)} • ${this.esc(v.ago)}</div>
+          </div>
         </div>
-        <div class="hud-right">
-            <span>HI <span id="hud-highscore">00000</span></span>
-            <span id="hud-score">00000</span>
-        </div>
-    </div>
+      `;
+    }
 
-    <!-- Mobile Button Layout (Overlay) -->
-    <div id="mobile-controls">
-        <button id="mobile-left" class="mobile-btn" title="Move Left">←</button>
-        <button id="mobile-jump" class="mobile-btn" title="Jump">↑</button>
-        <button id="mobile-right" class="mobile-btn" title="Move Right">→</button>
-    </div>
+    async loadAndRenderHome(append = false) {
+      if (this.loading) return;
+      this.loading = true;
 
-    <!-- Screen 1: Loading Screen -->
-    <div id="loading-screen" class="overlay">
-        <div class="glass-panel">
-            <h1>T-REX 3D RUN</h1>
-            <p class="subtitle" style="margin-bottom:15px;">Loading Environment</p>
-            <div class="loader-container">
-                <div class="loader-track">
-                    <div id="loader-progress" class="loader-bar"></div>
-                </div>
-                <div id="loading-text">LOAD STATE... 0%</div>
-            </div>
-            <p style="font-size:6px; color:var(--text-muted); margin-top:20px; line-height:1.5;">
-                Note: Access through local server is required for 3D assets to load correctly.
-            </p>
-        </div>
-    </div>
+      if (!append) {
+        this.showLoading(this.query ? "Searching…" : "Loading videos…");
+      }
 
-    <!-- Screen 2: Main Menu -->
-    <div id="menu-screen" class="overlay hidden">
-        <div class="glass-panel">
-            <h1>T-REX 3D RUN</h1>
-            <p class="subtitle">Desert Escape</p>
-            
-            <div class="controls-info">
-                <div class="control-key">
-                    <span class="key-cap">Space</span> or <span class="key-cap">↑</span>
-                    <span>Jump</span>
-                </div>
-                <div class="control-key">
-                    <span class="key-cap">A</span> / <span class="key-cap">D</span> or <span class="key-cap">←</span> / <span class="key-cap">→</span>
-                    <span>Steer Lanes</span>
-                </div>
-            </div>
-            
-            <button id="btn-start" class="btn">START RUN</button>
-        </div>
-    </div>
+      try {
+        let typeId = null;
+        let keyword = this.query || null;
+        if (this.activeCat && String(this.activeCat).startsWith("kw:")) {
+          keyword = keyword || String(this.activeCat).slice(3);
+          typeId = null;
+        } else if (this.activeCat && this.activeCat !== "all") {
+          typeId = this.activeCat;
+        }
 
-    <!-- Screen 3: Game Over -->
-    <div id="gameover-screen" class="overlay hidden">
-        <div class="glass-panel">
-            <h1>G A M E   O V E R</h1>
-            <button id="btn-restart" class="btn-retry" title="Retry">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-                </svg>
+        // Home "All" = mixed feed: random page for variety
+        let page = this.page;
+        if (!append && this.activeCat === "all" && !keyword) {
+          // first load mix from a random early page range for variety
+          const mixPage = Math.floor(Math.random() * 30) + 1;
+          page = mixPage;
+          this.page = mixPage;
+        }
+
+        const result = await this.fetchVideos({
+          page,
+          typeId,
+          keyword
+        });
+
+        if (append) {
+          const ids = new Set(this.videos.map(v => v.id));
+          result.list.forEach(v => {
+            if (!ids.has(v.id)) this.videos.push(v);
+          });
+        } else {
+          // shuffle mix on home all
+          let list = result.list;
+          if (this.activeCat === "all" && !keyword) {
+            list = list.slice().sort(() => Math.random() - 0.5);
+          }
+          this.videos = list;
+        }
+        this.pagecount = result.pagecount;
+        this.total = result.total;
+        this.renderHome();
+      } catch (e) {
+        console.error(e);
+        if (!append) this.showError("Could not load videos from API.");
+        else this.toast("Failed to load more");
+      } finally {
+        this.loading = false;
+      }
+    }
+
+    renderHome() {
+      const main = document.getElementById("mainContainer");
+      const list = this.videos;
+      const title = (this.activeCat && String(this.activeCat).startsWith("kw:"))
+        ? String(this.activeCat).slice(3).replace(/\b\w/g, c => c.toUpperCase())
+        : (this.query
+          ? "Search Results"
+          : (this.activeCat === "all"
+              ? "Mixed Feed"
+              : (this.categories.find(c => String(c.id) === String(this.activeCat))?.name || "Category")));
+
+      let html = `
+        <div class="section-head">
+          <h2 class="section-title">
+            <span>${this.esc(title)}</span>
+            <span class="section-count">(${this.total.toLocaleString()})</span>
+          </h2>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="ctrl-btn shuffle-btn" id="shuffleBtn" onclick="app.shuffleFeed()" title="Refresh feed">
+              <span class="icon">
+                <svg width="15" height="15" viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+              </span>
+              <span>Shuffle</span>
             </button>
+            ${this.query ? `<button class="ctrl-btn" onclick="app.clearSearch()">Clear</button>` : ""}
+          </div>
         </div>
-    </div>
+      `;
 
-    <!-- Load Three.js and GLTFLoader from CDNs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-
-    <script>
-        // ==========================================
-        // 1. PROCEDURAL 8-BIT AUDIO SYNTHESIZER
-        // ==========================================
-        class SoundSynth {
-            constructor() {
-                this.ctx = null;
-                this.enabled = true;
-            }
-
-            init() {
-                if (this.ctx) return;
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) this.ctx = new AudioCtx();
-            }
-
-            toggle() {
-                this.enabled = !this.enabled;
-                return this.enabled;
-            }
-
-            playJump() {
-                if (!this.enabled || !this.ctx) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(140, now);
-                osc.frequency.exponentialRampToValueAtTime(550, now + 0.18);
-                gain.gain.setValueAtTime(0.18, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.19);
-            }
-
-            playCollect() {
-                if (!this.enabled || !this.ctx) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now); // C5
-                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-                gain.gain.setValueAtTime(0.12, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.25);
-            }
-
-            playHit() {
-                if (!this.enabled || !this.ctx) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(160, now);
-                osc.frequency.linearRampToValueAtTime(30, now + 0.45);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.55);
-            }
-
-            playMilestone() {
-                if (!this.enabled || !this.ctx) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(783.99, now); // G5
-                osc.frequency.setValueAtTime(1046.50, now + 0.1); // C6
-                gain.gain.setValueAtTime(0.08, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.4);
-            }
+      if (!list.length) {
+        html += `
+          <div class="empty-box">
+            <h3>No videos found</h3>
+            <p>Try another keyword or category.</p>
+            <button class="ctrl-btn solid" onclick="app.clearSearch()">Reset</button>
+          </div>
+        `;
+      } else {
+        html += `<div class="videos-grid">${list.map(v => this.card(v)).join("")}</div>`;
+        if (this.page < this.pagecount) {
+          html += `
+            <div class="load-more-wrap">
+              <button class="ctrl-btn solid" id="loadMoreBtn" onclick="app.loadMore()">
+                Load more
+              </button>
+            </div>`;
         }
+      }
 
-        const synth = new SoundSynth();
-        const btnAudio = document.getElementById('btn-audio');
+      main.innerHTML = html;
+    }
 
-        btnAudio.addEventListener('click', () => {
-            synth.init();
-            const enabled = synth.toggle();
-            if (enabled) {
-                btnAudio.classList.add('active');
-                btnAudio.textContent = 'ON';
-            } else {
-                btnAudio.classList.remove('active');
-                btnAudio.textContent = 'OFF';
-            }
+    async loadMore() {
+      const btn = document.getElementById("loadMoreBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Loading…";
+      }
+      this.page += 1;
+      await this.loadAndRenderHome(true);
+    }
+
+    async shuffleFeed() {
+      const btn = document.getElementById("shuffleBtn");
+      if (btn) {
+        btn.classList.add("spin-anim");
+        setTimeout(() => btn.classList.remove("spin-anim"), 460);
+      }
+      // Jump to a random page for variety
+      const maxPage = Math.min(this.pagecount || 50, 200);
+      this.page = Math.floor(Math.random() * maxPage) + 1;
+      this.videos = [];
+      await this.loadAndRenderHome();
+      this.toast("Videos shuffled ✨");
+    }
+
+    /* CATEGORIES */
+    renderCategories(skipFetch = false) {
+      document.getElementById("categoryBar").style.display = "none";
+      const main = document.getElementById("mainContainer");
+
+      // Order: Indian / viral first, then the rest A–Z
+      const priority = [
+        "Indian", "Amateur", "Teen", "MILF", "Latina", "Asian Woman", "Japanese",
+        "Lesbian", "Anal", "Big Tits", "Exotic", "Interracial", "Pornstar",
+        "Real Amateur", "Blowjob", "Creampie", "Gangbang", "AI", "Arab", "BBW"
+      ];
+      const ordered = this.categories.slice().sort((a, b) => {
+        const ia = priority.indexOf(a.name);
+        const ib = priority.indexOf(b.name);
+        const pa = ia === -1 ? 999 : ia;
+        const pb = ib === -1 ? 999 : ib;
+        if (pa !== pb) return pa - pb;
+        return a.name.localeCompare(b.name);
+      });
+
+      let html = `
+        <div class="section-head">
+          <h2 class="section-title">Categories</h2>
+          <span class="section-count">${this.categories.length} collections</span>
+        </div>
+        <div class="categories-grid">
+      `;
+
+      ordered.forEach(cat => {
+        const initial = cat.name.charAt(0).toUpperCase();
+        const countLabel = cat.count != null
+          ? `${Number(cat.count).toLocaleString()} videos`
+          : (cat.loadingMeta ? "Loading…" : "Explore collection");
+        const thumbHtml = cat.thumb
+          ? `<img src="${this.esc(cat.thumb)}" alt="${this.esc(cat.name)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='flex')" />
+             <div class="cat-placeholder" style="display:none">${this.esc(initial)}</div>`
+          : `<div class="cat-placeholder">${this.esc(initial)}</div>`;
+
+        html += `
+          <div class="cat-card" onclick="app.openCategoryHub('${cat.id}')">
+            <div class="cat-stack">
+              <div class="cat-stack-back"></div>
+              <div class="cat-stack-front">
+                ${thumbHtml}
+                <div class="cat-overlay">
+                  <span class="cat-overlay-count">${cat.count != null ? Number(cat.count).toLocaleString() : "—"}</span>
+                  <span class="cat-overlay-label">videos</span>
+                </div>
+              </div>
+            </div>
+            <div class="cat-info-row">
+              <div>
+                <h3 class="cat-name">${this.esc(cat.name)}</h3>
+                <div class="cat-count-sub">${this.esc(countLabel)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      main.innerHTML = html;
+
+      if (!skipFetch) this.enrichAllCategoryMetas();
+    }
+
+    async openCategoryHub(typeId) {
+      const cat = this.categories.find(c => String(c.id) === String(typeId));
+      if (!cat) return;
+      this.selectedCat = cat;
+      this.page = 1;
+      this.videos = [];
+      document.getElementById("categoryBar").style.display = "none";
+      this.showLoading(`Loading ${cat.name}…`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      try {
+        const result = await this.fetchVideos({ page: 1, typeId: cat.id });
+        this.videos = result.list;
+        this.pagecount = result.pagecount;
+        this.total = result.total;
+        cat.count = result.total;
+        if (result.list[0]) {
+          cat.thumb = result.list[0].thumbnail || result.list[0].poster || cat.thumb;
+        }
+        this.renderCategoryHub(cat);
+      } catch (e) {
+        console.error(e);
+        this.showError("Failed to load category.");
+      }
+    }
+
+    renderCategoryHub(cat) {
+      const main = document.getElementById("mainContainer");
+      const cover = this.videos[0]?.thumbnail || this.videos[0]?.poster || "";
+
+      let html = `
+        <div class="cat-hub-header">
+          <div class="cat-hub-left">
+            <div class="cat-hub-thumb">
+              ${cover
+                ? `<img src="${this.esc(cover)}" alt="" />`
+                : `<div class="cat-placeholder">${this.esc(cat.name.charAt(0))}</div>`}
+            </div>
+            <div class="cat-hub-text">
+              <h2>${this.esc(cat.name)}</h2>
+              <p>${this.total.toLocaleString()} videos available</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            ${this.videos.length
+              ? `<button class="ctrl-btn solid" onclick="app.playVideo(${this.videos[0].id})">Play</button>`
+              : ""}
+            <button class="ctrl-btn" onclick="app.closeCategoryHub()">All Categories</button>
+          </div>
+        </div>
+        <div class="section-head">
+          <h3 class="section-title">Videos in ${this.esc(cat.name)}</h3>
+        </div>
+        <div class="videos-grid">
+          ${this.videos.map(v => this.card(v)).join("")}
+        </div>
+      `;
+
+      if (this.page < this.pagecount) {
+        html += `
+          <div class="load-more-wrap">
+            <button class="ctrl-btn solid" id="loadMoreBtn" onclick="app.loadMoreHub()">
+              Load more
+            </button>
+          </div>`;
+      }
+
+      main.innerHTML = html;
+    }
+
+    async loadMoreHub() {
+      if (!this.selectedCat || this.loading) return;
+      this.loading = true;
+      const btn = document.getElementById("loadMoreBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Loading…";
+      }
+      this.page += 1;
+      try {
+        const result = await this.fetchVideos({
+          page: this.page,
+          typeId: this.selectedCat.id
         });
-
-        window.addEventListener('click', () => {
-            synth.init();
-        }, { once: true });
-
-
-        // ==========================================
-        // 2. ENDLESS RUNNER ENGINE
-        // ==========================================
-        const GAME_STATES = {
-            LOADING: 'loading',
-            MENU: 'menu',
-            RUNNING: 'running',
-            GAMEOVER: 'gameover'
-        };
-
-        const DINO_SCALE = 0.9;
-
-        const config = {
-            laneWidth: 3.2,
-            speedStart: 18,
-            speedMax: 40,
-            speedAcceleration: 0.12,
-            gravity: -58,
-            jumpVelocity: 24,
-            spawnMinDistance: 24,
-            spawnMaxDistance: 38
-        };
-
-        class Game {
-            constructor() {
-                this.state = GAME_STATES.LOADING;
-                this.score = 0;
-                this.highScore = parseInt(localStorage.getItem('trex3d_highscore') || '0', 10);
-                this.amberCount = 0;
-                this.speed = config.speedStart;
-                this.distanceTraveled = 0;
-                this.triggeredMilestones = { 100: false, 500: false, 1000: false, 2000: false, 5000: false, 10000: false };
-                this.highScoreBroken = false;
-
-                // Player state
-                this.currentLane = 0; // -1 = Left, 0 = Center, 1 = Right
-                this.trex = {
-                    mesh: null,
-                    mixer: null,
-                    animations: {},
-                    currentAnim: null,
-                    
-                    x: 0,
-                    targetX: 0,
-                    y: 0,
-                    velocity: 0,
-                    isGrounded: true,
-                    isDucking: false,
-                    boundingBox: new THREE.Box3()
-                };
-
-                // Track entities
-                this.groundTiles = [];
-                this.obstacles = [];
-                this.collectibles = [];
-                this.clouds = [];
-                this.particles = null;
-                this.cactusMeshes = [];
-                this.sandMaterial = null;
-
-                // Spawn timers
-                this.lastObstacleZ = 0;
-
-                // Bind UI
-                this.dom = {
-                    hud: document.getElementById('hud'),
-                    score: document.getElementById('hud-score'),
-                    amber: document.getElementById('amber-val'),
-                    highscore: document.getElementById('hud-highscore'),
-                    loaderProgress: document.getElementById('loader-progress'),
-                    loadingText: document.getElementById('loading-text'),
-                    loadingScreen: document.getElementById('loading-screen'),
-                    menuScreen: document.getElementById('menu-screen'),
-                    gameoverScreen: document.getElementById('gameover-screen'),
-                    btnStart: document.getElementById('btn-start'),
-                    btnRestart: document.getElementById('btn-restart'),
-                    goScore: document.getElementById('go-score'),
-                    goAmber: document.getElementById('go-amber'),
-                    mobileJump: document.getElementById('mobile-jump'),
-                    mobileLeft: document.getElementById('mobile-left'),
-                    mobileRight: document.getElementById('mobile-right'),
-                    btnCamSide: document.getElementById('cam-side'),
-                    btnCamFollow: document.getElementById('cam-follow'),
-                    btnZoomNormal: document.getElementById('zoom-normal'),
-                    btnZoomWide: document.getElementById('zoom-wide'),
-                    btnScrollZoom: document.getElementById('btn-scroll-zoom'),
-                    speedVignette: document.getElementById('speed-vignette'),
-                    btnSettings: document.getElementById('btn-settings'),
-                    settingsDropdown: document.getElementById('settings-dropdown')
-                };
-
-                this.cameraMode = 'side'; // Default to side view
-                this.cameraZoom = 'wide'; // Default to wide view
-                this.cameraZoomFactor = 1.6; // Default zoom factor
-                this.scrollZoomEnabled = true; // Enable scroll zoom by default
-
-                // Setup listener buttons
-                this.dom.btnStart.addEventListener('click', () => this.startGame());
-                this.dom.btnRestart.addEventListener('click', () => this.restartGame());
-                
-                this.dom.btnCamSide.addEventListener('click', () => this.setCameraMode('side'));
-                this.dom.btnCamFollow.addEventListener('click', () => this.setCameraMode('follow'));
-
-                this.dom.btnZoomNormal.addEventListener('click', () => this.setCameraZoom('normal'));
-                this.dom.btnZoomWide.addEventListener('click', () => this.setCameraZoom('wide'));
-
-                this.dom.btnScrollZoom.addEventListener('click', () => this.toggleScrollZoom());
-
-                // Enable mouse wheel scrolling to zoom in/out
-                window.addEventListener('wheel', (e) => {
-                    if (this.state !== GAME_STATES.RUNNING && this.state !== GAME_STATES.MENU) return;
-                    if (!this.scrollZoomEnabled) return;
-                    
-                    const zoomDelta = e.deltaY * 0.0012;
-                    this.cameraZoomFactor = THREE.MathUtils.clamp(this.cameraZoomFactor + zoomDelta, 0.5, 3.5);
-                    this.updateZoomUI();
-                }, { passive: true });
-                
-                if (this.dom.btnSettings && this.dom.settingsDropdown) {
-                    this.dom.btnSettings.addEventListener('click', (e) => {
-                        this.dom.settingsDropdown.classList.toggle('hidden');
-                        e.stopPropagation();
-                    });
-                    document.addEventListener('click', () => {
-                        this.dom.settingsDropdown.classList.add('hidden');
-                    });
-                    this.dom.settingsDropdown.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                    });
-                }
-
-                window.addEventListener('resize', () => this.onResize());
-
-                // Keys state
-                this.keys = { space: false, up: false, down: false, left: false, right: false };
-                window.addEventListener('keydown', (e) => this.onKeyDown(e));
-                window.addEventListener('keyup', (e) => this.onKeyUp(e));
-
-                this.setupMobileControls();
-                this.updateHighScoreUI();
-                this.updateMobileControlsUI();
-
-                // Start WebGL and load
-                this.initWebGL();
-                this.loadModel();
-            }
-
-            updateHighScoreUI() {
-                this.dom.highscore.textContent = String(Math.floor(this.highScore)).padStart(5, '0');
-            }
-
-            // Procedurally builds a subtly noisy sand texture + matching bump map
-            // so the ground reads as granular terrain instead of a flat color fill.
-            createSandTextures() {
-                const size = 256;
-                const canvas = document.createElement('canvas');
-                canvas.width = size; canvas.height = size;
-                const ctx = canvas.getContext('2d');
-
-                const bumpCanvas = document.createElement('canvas');
-                bumpCanvas.width = size; bumpCanvas.height = size;
-                const bctx = bumpCanvas.getContext('2d');
-
-                const base = { r: 210, g: 180, b: 140 };
-                for (let y = 0; y < size; y++) {
-                    for (let x = 0; x < size; x++) {
-                        const n = (Math.random() - 0.5) * 34;
-                        const speck = Math.random() > 0.985 ? (Math.random() * 60 - 30) : 0;
-                        const r = Math.min(255, Math.max(0, base.r + n + speck));
-                        const g = Math.min(255, Math.max(0, base.g + n * 0.85 + speck));
-                        const b = Math.min(255, Math.max(0, base.b + n * 0.6 + speck));
-                        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
-                        ctx.fillRect(x, y, 1, 1);
-
-                        const grey = 128 + n * 2.2;
-                        bctx.fillStyle = `rgb(${grey|0},${grey|0},${grey|0})`;
-                        bctx.fillRect(x, y, 1, 1);
-                    }
-                }
-
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                const bump = new THREE.CanvasTexture(bumpCanvas);
-                bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
-
-                return { map: tex, bumpMap: bump };
-            }
-
-            setCameraMode(mode) {
-                this.cameraMode = mode;
-                this.dom.btnCamSide.classList.remove('active');
-                this.dom.btnCamFollow.classList.remove('active');
-                
-                if (mode === 'side') {
-                    this.dom.btnCamSide.classList.add('active');
-                    this.currentLane = 0;
-                    this.trex.targetX = 0;
-                    this.trex.x = 0;
-                    if (this.trex.mesh) {
-                        this.trex.mesh.position.x = 0;
-                        this.trex.mesh.rotation.y = 0;
-                    }
-                } else {
-                    this.dom.btnCamFollow.classList.add('active');
-                }
-                this.updateMobileControlsUI();
-            }
-
-            updateMobileControlsUI() {
-                const btnLeft = document.getElementById('mobile-left');
-                const btnRight = document.getElementById('mobile-right');
-                if (btnLeft && btnRight) {
-                    if (this.cameraMode === 'side') {
-                        btnLeft.style.setProperty('display', 'none', 'important');
-                        btnRight.style.setProperty('display', 'none', 'important');
-                    } else {
-                        btnLeft.style.setProperty('display', 'flex', 'important');
-                        btnRight.style.setProperty('display', 'flex', 'important');
-                    }
-                }
-            }
-
-            setCameraZoom(zoom) {
-                this.cameraZoom = zoom;
-                this.cameraZoomFactor = zoom === 'normal' ? 1.0 : 1.6;
-                this.updateZoomUI();
-            }
-
-            toggleScrollZoom() {
-                this.scrollZoomEnabled = !this.scrollZoomEnabled;
-                if (this.scrollZoomEnabled) {
-                    this.dom.btnScrollZoom.classList.add('active');
-                    this.dom.btnScrollZoom.textContent = 'ON';
-                } else {
-                    this.dom.btnScrollZoom.classList.remove('active');
-                    this.dom.btnScrollZoom.textContent = 'OFF';
-                }
-            }
-
-            updateZoomUI() {
-                this.dom.btnZoomNormal.classList.remove('active');
-                this.dom.btnZoomWide.classList.remove('active');
-                
-                // Highlight the button closest to the current factor
-                if (Math.abs(this.cameraZoomFactor - 1.0) < Math.abs(this.cameraZoomFactor - 1.6)) {
-                    this.dom.btnZoomNormal.classList.add('active');
-                    this.cameraZoom = 'normal';
-                } else {
-                    this.dom.btnZoomWide.classList.add('active');
-                    this.cameraZoom = 'wide';
-                }
-            }
-
-            showMilestonePopup(value, title) {
-                const popup = document.getElementById('milestone-popup');
-                const pTitle = document.getElementById('milestone-title');
-                const pVal = document.getElementById('milestone-value');
-                if (popup && pTitle && pVal) {
-                    pTitle.textContent = title;
-                    pVal.textContent = value;
-                    popup.classList.remove('hidden');
-                    // Force reflow
-                    popup.offsetWidth;
-                    popup.classList.add('show');
-                    
-                    // Hide after 2.5 seconds
-                    if (this._popupTimeout) clearTimeout(this._popupTimeout);
-                    this._popupTimeout = setTimeout(() => {
-                        popup.classList.remove('show');
-                        setTimeout(() => popup.classList.add('hidden'), 300);
-                    }, 2500);
-                }
-            }
-
-            initWebGL() {
-                // Scene
-                this.scene = new THREE.Scene();
-                
-                const textureLoader = new THREE.TextureLoader();
-                textureLoader.load('sky.webp', (texture) => {
-                    texture.mapping = THREE.EquirectangularReflectionMapping;
-                    this.scene.background = texture;
-                    this.scene.environment = texture;
-                });
-                
-                // Cinematic warm desert dust fog for realistic depth shading
-                this.scene.fog = new THREE.FogExp2(0xe6d4b8, 0.008);
-
-                // Camera (Side View by default, matching classic layout ratio)
-                this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.camera.position.set(13.2, 2.2, 2.0); 
-                this.camera.lookAt(0, 1.4, -1.2);
-
-                // WebGL Renderer
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                this.renderer.shadowMap.enabled = true;
-                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                
-                // Perfect Cinematic Lighting / Realistic Renderer settings
-                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.renderer.toneMappingExposure = 1.1;
-                if ('outputEncoding' in this.renderer) {
-                    this.renderer.outputEncoding = THREE.sRGBEncoding;
-                }
-                if ('physicallyCorrectLights' in this.renderer) {
-                    this.renderer.physicallyCorrectLights = true;
-                }
-                
-                document.getElementById('canvas-container').appendChild(this.renderer.domElement);
-
-                // Cinematic ambient lighting (Teal-Orange color harmony: warm sky blue ambient + gold sun)
-                const hemiLight = new THREE.HemisphereLight(0xffebcc, 0xc2b280, 0.45); 
-                this.scene.add(hemiLight);
-
-                this.dirLight = new THREE.DirectionalLight(0xffedd6, 1.65); // Warm cinematic golden sun
-                this.dirLight.position.set(-25, 22, 18); // Back-side sun for dramatic long shadows
-                this.dirLight.castShadow = true;
-                this.dirLight.shadow.mapSize.width = 2048; // Ultra-sharp shadows
-                this.dirLight.shadow.mapSize.height = 2048;
-                this.dirLight.shadow.bias = -0.0003;
-                this.dirLight.shadow.camera.near = 0.5;
-                this.dirLight.shadow.camera.far = 130;
-                this.dirLight.shadow.camera.left = -40;
-                this.dirLight.shadow.camera.right = 40;
-                this.dirLight.shadow.camera.top = 40;
-                this.dirLight.shadow.camera.bottom = -70;
-                this.scene.add(this.dirLight);
-
-                const fillLight = new THREE.DirectionalLight(0x7ec0ff, 0.35); // Cool skylight fill to contrast shadows
-                fillLight.position.set(25, 18, -12);
-                this.scene.add(fillLight);
-
-                // Warm ground bounce light — subtly lifts shadowed undersides,
-                // the way light scattered off sand/rock would in reality.
-                const bounceLight = new THREE.HemisphereLight(0xffebcc, 0x000000, 0.2);
-                bounceLight.position.set(0, -1, 0);
-                this.scene.add(bounceLight);
-
-                // Sun Mesh
-                const sunGeo = new THREE.SphereGeometry(6, 8, 8);
-                const sunMat = new THREE.MeshBasicMaterial({ color: 0xeeeeee });
-                this.sunMesh = new THREE.Mesh(sunGeo, sunMat);
-                this.sunMesh.position.set(12, 38, -130);
-                this.scene.add(this.sunMesh);
-
-                // Build initial environmental ground segments
-                this.buildEnvironment();
-
-                // Spawn clouds disabled to keep sky clean
-                // for (let i = 0; i < 6; i++) {
-                //     this.spawnCloud(Math.random() * -150 - 50);
-                // }
-
-                // Add sandy dust storm particles disabled to keep sky clean
-                // this.buildAshParticles();
-
-                // Ground-hugging dust kicked up by footsteps/landings
-                this.buildDustSystem();
-
-                // Contact shadow disabled (realistic directional shadow is used instead)
-
-                // Distant heat haze — a faint shimmering plane near the volcanic
-                // mesas that reads as rising thermal distortion.
-                this.hazeClock = 0;
-                const hazeGeo = new THREE.PlaneGeometry(60, 10, 24, 4);
-                const hazeMat = new THREE.MeshBasicMaterial({
-                    color: 0xffffff,
-                    transparent: true,
-                    opacity: 0.05,
-                    depthWrite: false
-                });
-                this.hazePlane = new THREE.Mesh(hazeGeo, hazeMat);
-                this.hazePlane.position.set(0, 5, -70);
-                this.hazeBaseVerts = this.hazePlane.geometry.attributes.position.array.slice();
-                this.scene.add(this.hazePlane);
-
-                // Camera shake / speed-sensation state
-                this.shake = { x: 0, y: 0, trauma: 0 };
-                this.landingSquash = 0;
-            }
-
-            buildDustSystem() {
-                const count = 60;
-                this.dustGeometry = new THREE.BufferGeometry();
-                this.dustPositions = new Float32Array(count * 3);
-                this.dustVelocities = [];
-                this.dustLife = new Float32Array(count).fill(0);
-
-                for (let i = 0; i < count; i++) {
-                    this.dustPositions[i * 3] = 0;
-                    this.dustPositions[i * 3 + 1] = -5; // parked underground until emitted
-                    this.dustPositions[i * 3 + 2] = 0;
-                    this.dustVelocities.push({ x: 0, y: 0, z: 0 });
-                }
-                this.dustGeometry.setAttribute('position', new THREE.BufferAttribute(this.dustPositions, 3));
-                const mat = new THREE.PointsMaterial({
-                    color: 0xd8c6a0,
-                    size: 0.28,
-                    transparent: true,
-                    opacity: 0.55,
-                    depthWrite: false
-                });
-                this.dustPoints = new THREE.Points(this.dustGeometry, mat);
-                this.scene.add(this.dustPoints);
-                this.dustCursor = 0;
-            }
-
-            emitDust(x, y, z, count = 3, force = 1) {
-                if (!this.dustGeometry) return;
-                for (let n = 0; n < count; n++) {
-                    const i = this.dustCursor;
-                    this.dustCursor = (this.dustCursor + 1) % this.dustLife.length;
-                    this.dustPositions[i * 3] = x + (Math.random() - 0.5) * 0.6;
-                    this.dustPositions[i * 3 + 1] = y + 0.05;
-                    this.dustPositions[i * 3 + 2] = z + (Math.random() - 0.5) * 0.6;
-                    this.dustVelocities[i] = {
-                        x: (Math.random() - 0.5) * 1.2,
-                        y: (0.8 + Math.random() * 1.4) * force,
-                        z: (Math.random() - 0.5) * 1.2 - this.speed * 0.15
-                    };
-                    this.dustLife[i] = 0.55 + Math.random() * 0.25;
-                }
-            }
-
-            updateDust(dt) {
-                if (!this.dustGeometry) return;
-                for (let i = 0; i < this.dustLife.length; i++) {
-                    if (this.dustLife[i] > 0) {
-                        this.dustLife[i] -= dt;
-                        const v = this.dustVelocities[i];
-                        this.dustPositions[i * 3] += v.x * dt;
-                        this.dustPositions[i * 3 + 1] += v.y * dt;
-                        v.y -= 4.5 * dt; // gravity on the dust puff
-                        this.dustPositions[i * 3 + 2] += v.z * dt;
-                        if (this.dustLife[i] <= 0) {
-                            this.dustPositions[i * 3 + 1] = -5; // park it out of sight
-                        }
-                    }
-                }
-                this.dustGeometry.attributes.position.needsUpdate = true;
-            }
-
-            updateHeatHaze(dt) {
-                if (!this.hazePlane) return;
-                this.hazeClock += dt;
-                const posAttr = this.hazePlane.geometry.attributes.position;
-                const base = this.hazeBaseVerts;
-                for (let i = 0; i < posAttr.count; i++) {
-                    const bx = base[i * 3];
-                    const by = base[i * 3 + 1];
-                    posAttr.array[i * 3 + 2] = base[i * 3 + 2] + Math.sin(this.hazeClock * 1.4 + bx * 0.5 + by * 0.3) * 0.6;
-                }
-                posAttr.needsUpdate = true;
-            }
-
-            getDuneHeight(x, z) {
-                const absX = Math.abs(x);
-                // Keep the road and curb stones flat. Road boundary is around 8.3, so keep flat up to x = 11.5
-                if (absX <= 11.5) return 0;
-                
-                const distToRoad = absX - 11.5;
-                // Blend height smoothly from 0 to full dune height over 12 units
-                const blendFactor = Math.min(1.0, distToRoad / 12.0);
-                
-                // We use base frequency for tiling period of 100 in Z
-                const baseFreqZ = (2 * Math.PI) / 100; // ~0.062831853
-                
-                // Overlay multiple sine waves for beautiful, organic rolling sand dunes
-                // Ensure all Z components are periodic multiples of baseFreqZ so segments tile seamlessly
-                const wave1 = Math.sin(x * 0.07) * Math.cos(z * baseFreqZ) * 4.5;
-                const wave2 = Math.sin(x * 0.14 + z * baseFreqZ * 2) * 1.5;
-                const wave3 = Math.cos(x * 0.035 - z * baseFreqZ) * 3.8; // larger rolling hills
-                
-                return (wave1 + wave2 + wave3) * blendFactor;
-            }
-
-            buildEnvironment() {
-                // Precompute the procedural sand texture once and reuse (cheaper + tileable).
-                const sandTex = this.createSandTextures();
-                sandTex.map.repeat.set(4, 24);
-                sandTex.bumpMap.repeat.set(4, 24);
-
-                const sandTexWide = this.createSandTextures();
-                sandTexWide.map.repeat.set(16, 24);
-                sandTexWide.bumpMap.repeat.set(16, 24);
-
-                // Unlimited scrolling road segments. 
-                // We tile 6 tiles of length 100, which wrap around.
-                const segmentLength = 100;
-                for (let i = -1; i < 5; i++) {
-                    const group = new THREE.Group();
-                    group.position.z = -i * segmentLength;
-                           // Road Center (Desert sand path with light lines)
-                    const roadGeo = new THREE.PlaneGeometry(16, segmentLength);
-                    const roadMat = new THREE.MeshStandardMaterial({
-                        color: 0xd2b48c, // Sandy path color
-                        map: sandTex.map,
-                        bumpMap: sandTex.bumpMap,
-                        bumpScale: 0.035,
-                        roughness: 0.95,
-                        metalness: 0.0
-                    });
-                    const road = new THREE.Mesh(roadGeo, roadMat);
-                    road.rotation.x = -Math.PI / 2;
-                    road.receiveShadow = true;
-                    road.name = 'groundTile';
-                    group.add(road);
- 
-
-
-                    // Side sandy planes instead of lava rivers, now with wavy desert dunes
-                    const groundSidesMat = new THREE.MeshStandardMaterial({
-                        color: 0xc2b280, // Desert sand sides
-                        map: sandTexWide.map,
-                        bumpMap: sandTexWide.bumpMap,
-                        bumpScale: 0.05,
-                        roughness: 1.0,
-                        metalness: 0.0
-                    });
-                    
-                    // Left ground with modified height vertices
-                    const leftGroundGeo = new THREE.PlaneGeometry(80, segmentLength, 40, 40);
-                    const posAttrLeft = leftGroundGeo.attributes.position;
-                    for (let j = 0; j < posAttrLeft.count; j++) {
-                        const localX = posAttrLeft.getX(j);
-                        const localY = posAttrLeft.getY(j);
-                        const groupX = localX - 48; // since leftGround is at x = -48
-                        const groupZ = -localY; // world Z is -localY
-                        const height = this.getDuneHeight(groupX, groupZ);
-                        posAttrLeft.setZ(j, height);
-                    }
-                    leftGroundGeo.computeVertexNormals();
-
-                    const leftGround = new THREE.Mesh(leftGroundGeo, groundSidesMat);
-                    leftGround.rotation.x = -Math.PI / 2;
-                    leftGround.position.set(-48, -0.05, 0);
-                    leftGround.receiveShadow = true;
-                    leftGround.name = 'groundTile';
-                    group.add(leftGround);
-
-                    // Right ground with modified height vertices
-                    const rightGroundGeo = new THREE.PlaneGeometry(80, segmentLength, 40, 40);
-                    const posAttrRight = rightGroundGeo.attributes.position;
-                    for (let j = 0; j < posAttrRight.count; j++) {
-                        const localX = posAttrRight.getX(j);
-                        const localY = posAttrRight.getY(j);
-                        const groupX = localX + 48; // since rightGround is at x = 48
-                        const groupZ = -localY; // world Z is -localY
-                        const height = this.getDuneHeight(groupX, groupZ);
-                        posAttrRight.setZ(j, height);
-                    }
-                    rightGroundGeo.computeVertexNormals();
-
-                    const rightGround = new THREE.Mesh(rightGroundGeo, groundSidesMat);
-                    rightGround.rotation.x = -Math.PI / 2;
-                    rightGround.position.set(48, -0.05, 0);
-                    rightGround.receiveShadow = true;
-                    rightGround.name = 'groundTile';
-                    group.add(rightGround);
-
-                    // Curb sandstone boulders
-                    const curbGeo = new THREE.DodecahedronGeometry(0.5, 0);
-                    const curbMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9, flatShading: true }); // sandstone rocks
-                    for (let j = 0; j < segmentLength; j += 8) {
-                        const leftC = new THREE.Mesh(curbGeo, curbMat);
-                        leftC.position.set(-8.3, 0.2, -segmentLength/2 + j + Math.random()*2);
-                        leftC.rotation.set(Math.random(), Math.random(), Math.random());
-                        leftC.scale.set(1 + Math.random()*0.5, 1 + Math.random()*0.5, 1 + Math.random()*0.5);
-                        leftC.castShadow = true;
-                        leftC.receiveShadow = true;
-                        group.add(leftC);
-
-                        const rightC = leftC.clone();
-                        rightC.position.set(8.3, 0.2, -segmentLength/2 + j + Math.random()*2);
-                        group.add(rightC);
-                    }
- 
-                    this.scene.add(group);
-                    this.groundTiles.push({
-                        mesh: group,
-                        length: segmentLength
-                    });
-                }
-            }
- 
-            spawnMountain(parentGroup, xOffset, zOffset) {
-                const mesa = new THREE.Group();
-                const mX = xOffset + (Math.random() * 8 - 4);
-                const mZ = zOffset + (Math.random() * 30 - 15);
-                const mY = this.getDuneHeight(mX, mZ);
-                mesa.position.set(mX, mY, mZ);
- 
-                const height = 12 + Math.random() * 10;
-                const topRad = 3 + Math.random() * 4;
-                const botRad = 8 + Math.random() * 6;
-                const mesaGeo = new THREE.CylinderGeometry(topRad, botRad, height, 6);
-                const mesaMat = new THREE.MeshStandardMaterial({
-                    color: 0xa0522d, // Sienna / desert clay cliffs
-                    roughness: 0.9,
-                    flatShading: true
-                });
-                const mesh = new THREE.Mesh(mesaGeo, mesaMat);
-                mesh.position.y = height / 2;
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                mesa.add(mesh);
- 
-                // Add small rocks clustered around the base
-                const rockGeo = new THREE.DodecahedronGeometry(1.2, 0);
-                const rockMat = new THREE.MeshStandardMaterial({ color: 0x8b7355, roughness: 0.9, flatShading: true }); // sandstone rocks
-                for (let i = 0; i < 3; i++) {
-                    const rock = new THREE.Mesh(rockGeo, rockMat);
-                    const angle = Math.random() * Math.PI * 2;
-                    const radius = botRad - 1.0;
-                    rock.position.set(Math.cos(angle) * radius, 0.4, Math.sin(angle) * radius);
-                    rock.rotation.set(Math.random(), Math.random(), Math.random());
-                    rock.scale.set(1 + Math.random(), 1 + Math.random(), 1 + Math.random());
-                    mesa.add(rock);
-                }             
-
-                parentGroup.add(mesa);
-            }
-
-            buildStars() {
-                // Daytime desert: stars removed
-            }
-
-            buildAshParticles() {
-                const count = 250;
-                this.ashGeometry = new THREE.BufferGeometry();
-                this.ashPositions = new Float32Array(count * 3);
-                this.ashSpeeds = [];
-
-                for (let i = 0; i < count; i++) {
-                    this.ashPositions[i * 3] = Math.random() * 40 - 20;
-                    this.ashPositions[i * 3 + 1] = Math.random() * 25 + 5;
-                    this.ashPositions[i * 3 + 2] = Math.random() * -120 + 20;
-                    
-                    this.ashSpeeds.push({
-                        x: Math.random() * 0.02 - 0.01,
-                        y: Math.random() * 0.04 + 0.04,
-                        z: Math.random() * 0.02 - 0.01
-                    });
-                }
-                this.ashGeometry.setAttribute('position', new THREE.BufferAttribute(this.ashPositions, 3));
-                const mat = new THREE.PointsMaterial({ color: 0xdcdcdc, size: 0.22, transparent: true, opacity: 0.5 });
-                this.particles = new THREE.Points(this.ashGeometry, mat);
-                this.scene.add(this.particles);
-            }
-
-            updateAshParticles(delta) {
-                if (!this.particles) return;
-                const posArr = this.ashGeometry.attributes.position.array;
-                for (let i = 0; i < posArr.length / 3; i++) {
-                    const speed = this.ashSpeeds[i];
-                    posArr[i * 3] += speed.x * delta * 60;
-                    posArr[i * 3 + 1] -= speed.y * delta * 60;
-                    posArr[i * 3 + 2] += this.speed * delta;
-
-                    if (posArr[i * 3 + 1] < 0) {
-                        posArr[i * 3] = Math.random() * 40 - 20;
-                        posArr[i * 3 + 1] = 25;
-                        posArr[i * 3 + 2] = Math.random() * -120;
-                    }
-                    if (posArr[i * 3 + 2] > 20) {
-                        posArr[i * 3 + 2] = -100;
-                    }
-                }
-                this.ashGeometry.attributes.position.needsUpdate = true;
-            }
-
-            spawnCloud(zPos) {
-                const cloudGroup = new THREE.Group();
-                cloudGroup.position.set(Math.random() * 50 - 25, 13 + Math.random() * 5, zPos);
-                
-                const cloudMat = new THREE.MeshStandardMaterial({
-                    color: 0xeaeaea, // Soft light-grey cloud
-                    roughness: 0.95,
-                    flatShading: true,
-                    transparent: true,
-                    opacity: 0.6
-                });
-                
-                const count = 3 + Math.floor(Math.random() * 3);
-                for (let i = 0; i < count; i++) {
-                    const r = 2.5 + Math.random() * 3;
-                    const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), cloudMat);
-                    sphere.position.set(i * 1.9 - (count*0.9), Math.random() * 0.5, Math.random() * 0.5);
-                    cloudGroup.add(sphere);
-                }
-                this.scene.add(cloudGroup);
-                this.clouds.push({ mesh: cloudGroup, speed: 2 + Math.random() * 2 });
-            }
-
-            // ==========================================
-            // 3. T-REX CHARACTER MODEL LOADING
-            // ==========================================
-            loadModel() {
-                const manager = new THREE.LoadingManager();
-                const loader = new THREE.GLTFLoader(manager);
-                const modelUrl = 'tyranosaurus-rex-animated/source/Tiranosaurio Rex desbocado.glb';
-                
-                manager.onProgress = (url, itemsLoaded, itemsTotal) => {
-                    const percent = Math.round((itemsLoaded / itemsTotal) * 100);
-                    this.dom.loaderProgress.style.width = percent + '%';
-                    this.dom.loadingText.textContent = `Extracting Assets... ${percent}%`;
-                };
-
-                manager.onLoad = () => {
-                    this.dom.loaderProgress.style.width = '100%';
-                    this.dom.loadingText.textContent = 'World loaded perfectly!';
-                    
-                    // Spawn trees randomly on side ground areas
-                    this.spawnTreesOnGround();
-
-                    setTimeout(() => {
-                        this.setupTrex(this.dinoGltf);
-                        this.transitionState(GAME_STATES.MENU);
-                    }, 500);
-                };
-
-                manager.onError = (url) => {
-                    console.error('Error loading:', url);
-                    this.dom.loadingText.textContent = 'Error loading! Check server terminal.';
-                    this.dom.loadingText.style.color = '#ff3333';
-                };
-                
-                loader.load('cactus__pack.glb', (gltf) => {
-                    this.cactusMeshes = [];
-                    gltf.scene.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                            child.position.set(0, 0, 0); // center it
-                            this.cactusMeshes.push(child);
-                        }
-                    });
-                });
-
-                // Load tree models from tree folder
-                this.treeMeshes = [];
-                const treePaths = [
-                    'tree/lowpoly_scan_trees_pack_1_live_oak_w_graffiti.glb',
-                    'tree/realistic_hd_canary_island_date_palm_3140.glb',
-                    'tree/realistic_hd_joshua_tree_1130.glb'
-                ];
-                treePaths.forEach(path => {
-                    loader.load(path, (gltf) => {
-                        gltf.scene.traverse((child) => {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                            }
-                        });
-                        this.treeMeshes.push({
-                            path: path,
-                            scene: gltf.scene
-                        });
-                    });
-                });
-
-                // Removed loose sand GLB loader
-                
-                loader.load(modelUrl, (gltf) => {
-                    this.dinoGltf = gltf;
-                });
-            }
-
-            setupTrex(gltf) {
-                const model = gltf.scene;
-                
-                // Set scale to DINO_SCALE
-                model.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE);
-                model.position.set(0, 0, 0);
-                
-                // Flip model 180 degrees to face away from the camera
-                model.rotation.y = Math.PI; 
-                
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                        if (child.material) {
-                            child.material.roughness = 0.45; // Shinier specular highlights for realism
-                            child.material.metalness = 0.22; // Slightly metallic sheen for skin reflection
-                        }
-                    }
-                });
-                
-                this.trex.mesh = new THREE.Group();
-                this.trex.mesh.add(model);
-                this.trex.mesh.position.set(0, 0, 0);
-                this.scene.add(this.trex.mesh);
-                
-                this.trex.mixer = new THREE.AnimationMixer(model);
-                gltf.animations.forEach((clip) => {
-                    this.trex.animations[clip.name] = this.trex.mixer.clipAction(clip);
-                });
-                
-                this.playTrexAnimation('idle');
-            }
-
-            spawnTreesOnGround() {
-                if (!this.treeMeshes || this.treeMeshes.length === 0) return;
-                
-                this.groundTiles.forEach(tile => {
-                    const group = tile.mesh;
-                    const segmentLength = 100;
-                    
-                    // Spawn trees randomly outside the road area (|X| > 18.0)
-                    // This ensures foliage doesn't clip into the road or curbs.
-                    const leftCount = 4 + Math.floor(Math.random() * 3);
-                    for (let i = 0; i < leftCount; i++) {
-                        const treeData = this.treeMeshes[Math.floor(Math.random() * this.treeMeshes.length)];
-                        const treeScene = treeData.scene.clone();
-                        
-                        // Compute bounding box of the unscaled, unrotated tree model to center it
-                        const box = new THREE.Box3().setFromObject(treeScene);
-                        const center = new THREE.Vector3();
-                        box.getCenter(center);
-                        
-                        // Create a wrapper group and offset the tree scene inside it
-                        // so that (0, 0, 0) of the wrapper corresponds to the bottom center of the tree
-                        const wrapper = new THREE.Group();
-                        treeScene.position.set(-center.x, -box.min.y, -center.z);
-                        wrapper.add(treeScene);
-                        
-                        const x = -18.0 - Math.random() * 24.0; // between -18.0 and -42.0
-                        const z = -segmentLength / 2 + Math.random() * segmentLength;
-                        
-                        // Set scale based on the model type
-                        let scale = 0.5 + Math.random() * 0.5;
-                        if (treeData.path.includes('palm')) {
-                            scale *= 0.8;
-                        } else if (treeData.path.includes('joshua')) {
-                            scale *= 1.2;
-                        } else if (treeData.path.includes('oak')) {
-                            scale *= 0.65;
-                        }
-                        
-                        // Adjust Y height of the wrapper to sit perfectly on top of the dunes
-                        const y = this.getDuneHeight(x, z);
-                        
-                        wrapper.scale.set(scale, scale, scale);
-                        wrapper.position.set(x, y, z);
-                        wrapper.rotation.y = Math.random() * Math.PI * 2;
-                        
-                        group.add(wrapper);
-                    }
-
-                    const rightCount = 4 + Math.floor(Math.random() * 3);
-                    for (let i = 0; i < rightCount; i++) {
-                        const treeData = this.treeMeshes[Math.floor(Math.random() * this.treeMeshes.length)];
-                        const treeScene = treeData.scene.clone();
-                        
-                        // Compute bounding box of the unscaled, unrotated tree model to center it
-                        const box = new THREE.Box3().setFromObject(treeScene);
-                        const center = new THREE.Vector3();
-                        box.getCenter(center);
-                        
-                        // Create a wrapper group and offset the tree scene inside it
-                        const wrapper = new THREE.Group();
-                        treeScene.position.set(-center.x, -box.min.y, -center.z);
-                        wrapper.add(treeScene);
-                        
-                        const x = 18.0 + Math.random() * 24.0; // between 18.0 and 42.0
-                        const z = -segmentLength / 2 + Math.random() * segmentLength;
-                        
-                        // Set scale based on the model type
-                        let scale = 0.5 + Math.random() * 0.5;
-                        if (treeData.path.includes('palm')) {
-                            scale *= 0.8;
-                        } else if (treeData.path.includes('joshua')) {
-                            scale *= 1.2;
-                        } else if (treeData.path.includes('oak')) {
-                            scale *= 0.65;
-                        }
-                        
-                        // Adjust Y height of the wrapper to sit perfectly on top of the dunes
-                        const y = this.getDuneHeight(x, z);
-                        
-                        wrapper.scale.set(scale, scale, scale);
-                        wrapper.position.set(x, y, z);
-                        wrapper.rotation.y = Math.random() * Math.PI * 2;
-                        
-                        group.add(wrapper);
-                    }
-                });
-            }
-
-            playTrexAnimation(name, duration = 0.2) {
-                const action = this.trex.animations[name];
-                if (!action) return;
-                
-                if (this.trex.currentAnim === name) return;
-                
-                const prevAction = this.trex.animations[this.trex.currentAnim];
-                if (prevAction) {
-                    prevAction.fadeOut(duration);
-                }
-                
-                action.reset().fadeIn(duration).play();
-                this.trex.currentAnim = name;
-            }
-
-            // ==========================================
-            // 4. GAME STATES & CONTROLS
-            // ==========================================
-            transitionState(newState) {
-                this.state = newState;
-                console.log('Game State transitioned to:', newState);
-
-                this.dom.loadingScreen.classList.add('hidden');
-                this.dom.menuScreen.classList.add('hidden');
-                this.dom.gameoverScreen.classList.add('hidden');
-                this.dom.hud.classList.remove('visible');
-
-                if (newState === GAME_STATES.MENU) {
-                    this.dom.menuScreen.classList.remove('hidden');
-                    this.playTrexAnimation('idle');
-                    if (this.trex.mesh) {
-                        this.trex.mesh.position.set(0, 0, 0);
-                        this.trex.mesh.rotation.set(0, 0, 0);
-                        this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
-                        this.trex.x = 0;
-                        this.trex.targetX = 0;
-                        this.currentLane = 0;
-                        this.trex.y = 0;
-                        this.trex.isDucking = false; // Reset ducking state
-                    }
-                } else if (newState === GAME_STATES.RUNNING) {
-                    this.dom.hud.classList.add('visible');
-                    this.playTrexAnimation('run');
-                    if (this.trex.mesh) {
-                        this.trex.mesh.position.set(0, 0, 0);
-                        this.trex.mesh.rotation.set(0, 0, 0);
-                        this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
-                    }
-                } else if (newState === GAME_STATES.GAMEOVER) {
-                    this.dom.gameoverScreen.classList.remove('hidden');
-                    this.dom.hud.classList.add('visible'); // Keep HUD visible during game over like screenshot!
-                    
-                    // Fall down crash animation
-                    if (this.trex.mesh) {
-                        this.trex.mesh.rotation.z = Math.PI / 2.6; 
-                        this.trex.mesh.position.y = 0.35;
-                    }
-                    this.playTrexAnimation('roar', 0.1);
-                    
-                    if (this.score > this.highScore) {
-                        this.highScore = this.score;
-                        localStorage.setItem('trex3d_highscore', this.highScore);
-                        this.updateHighScoreUI();
-                    }
-                }
-            }
-
-            startGame() {
-                synth.init();
-                this.score = 0;
-                this.triggeredMilestones = { 100: false, 500: false, 1000: false, 2000: false, 5000: false, 10000: false };
-                this.highScoreBroken = false;
-                this.amberCount = 0;
-                this.speed = config.speedStart;
-                this.distanceTraveled = 0;
-                this.lastObstacleZ = -25; // Clear start runway
-                this.currentLane = 0;
-                this.trex.x = 0;
-                this.trex.targetX = 0;
-                this.trex.y = 0;
-                this.trex.velocity = 0;
-                this.trex.isGrounded = true;
-                this.trex.isDucking = false; // Reset ducking state
-                this.shake.trauma = 0;
-                this.shake.x = 0;
-                this.shake.y = 0;
-                this.landingSquash = 0;
-                this.camera.fov = 60;
-                this.camera.updateProjectionMatrix();
-                if (this.dom.speedVignette) this.dom.speedVignette.style.opacity = 0;
-                
-                if (this.trex.mesh) {
-                    this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE); // Reset scale
-                }
-                
-                this.obstacles.forEach(obs => this.scene.remove(obs.mesh));
-                this.obstacles = [];
-                this.collectibles.forEach(col => this.scene.remove(col.mesh));
-                this.collectibles = [];
-
-                this.dom.score.textContent = '00000';
-                if (this.dom.amber) this.dom.amber.textContent = '00';
-
-                this.transitionState(GAME_STATES.RUNNING);
-            }
-
-            restartGame() {
-                this.startGame();
-            }
-
-            onKeyDown(e) {
-                if (this.state !== GAME_STATES.RUNNING) return;
-                
-                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
-                    this.keys.space = true;
-                    this.jump();
-                    e.preventDefault();
-                }
-                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                    this.keys.left = true;
-                    if (!e.repeat) this.moveLane(-1);
-                    e.preventDefault();
-                }
-                if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                    this.keys.right = true;
-                    if (!e.repeat) this.moveLane(1);
-                    e.preventDefault();
-                }
-            }
-
-            onKeyUp(e) {
-                if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
-                    this.keys.space = false;
-                }
-                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                    this.keys.left = false;
-                }
-                if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                    this.keys.right = false;
-                }
-            }
-
-            setupMobileControls() {
-                this.dom.mobileJump.addEventListener('touchstart', (e) => {
-                    this.jump();
-                    e.preventDefault();
-                });
-
-                this.dom.mobileLeft.addEventListener('touchstart', (e) => {
-                    this.moveLane(-1);
-                    e.preventDefault();
-                });
-
-                this.dom.mobileRight.addEventListener('touchstart', (e) => {
-                    this.moveLane(1);
-                    e.preventDefault();
-                });
-
-                // Tap anywhere on canvas/screen to jump (except UI buttons/settings dropdown)
-                window.addEventListener('touchstart', (e) => {
-                    if (this.state !== GAME_STATES.RUNNING) return;
-                    
-                    let target = e.target;
-                    while (target && target !== document.body) {
-                        if (target.tagName === 'BUTTON' || 
-                            target.id === 'settings-dropdown' || 
-                            target.classList.contains('mobile-btn') || 
-                            target.closest('.top-buttons')) {
-                            return; // Ignore screen tap if pressing buttons/settings
-                        }
-                        target = target.parentElement;
-                    }
-                    
-                    this.jump();
-                    e.preventDefault();
-                }, { passive: false });
-            }
-
-            jump() {
-                if (this.trex.isGrounded && !this.trex.isDucking) {
-                    this.trex.velocity = config.jumpVelocity;
-                    this.trex.isGrounded = false;
-                    this.emitDust(this.trex.x, 0, 0.4, 6, 0.9);
-                    this.landingSquash = 0.5; // brief anticipation crouch on takeoff too
-                    synth.playJump();
-                }
-            }
-
-            duck(isDucking) {
-                // Ducking disabled as per request
-            }
-
-            moveLane(dir) {
-                if (this.state !== GAME_STATES.RUNNING) return;
-                if (this.cameraMode === 'side') return; // Disable lane changing in Side View camera mode
-                this.currentLane = THREE.MathUtils.clamp((this.currentLane || 0) + dir, -1, 1);
-                this.trex.targetX = this.currentLane * config.laneWidth;
-                
-                // Tilt rotation during lane change
-                if (this.trex.mesh) {
-                    this.trex.mesh.rotation.y = (dir * 0.15); // subtle bank angle
-                    setTimeout(() => {
-                        if (this.state === GAME_STATES.RUNNING && this.trex.mesh) {
-                            this.trex.mesh.rotation.y = 0;
-                        }
-                    }, 150);
-                }
-            }
-
-            // ==========================================
-            // 5. CACTUS & COLLECTIBLE SPRAWNING
-            // ==========================================
-            spawnObstacle() {
-                // In 3rd person view, spawn randomly in any of the 3 lanes (-1, 0, 1)
-                // In side view, spawn only in the center lane (0)
-                let laneX = 0;
-                if (this.cameraMode !== 'side') {
-                    const lanes = [-1, 0, 1];
-                    const chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
-                    laneX = chosenLane * config.laneWidth;
-                }
-
-                // ONLY CACTUS IS OBSTACLE
-                const obstacle = this.createCactus();
-                obstacle.mesh.position.set(laneX, 0, this.lastObstacleZ);
-                obstacle.type = 'cactus';
-
-                obstacle.boundingBox = new THREE.Box3();
-                this.scene.add(obstacle.mesh);
-                this.obstacles.push(obstacle);
-            }
-
-            createCactus() {
-                const group = new THREE.Group();
-                let width = 0;
-                let height = 0;
-                let depth = 0;
-
-                const count = Math.random() > 0.65 ? 2 : 1; // 35% chance of 2 cacti
-                for (let i = 0; i < count; i++) {
-                    if (this.cactusMeshes && this.cactusMeshes.length > 0) {
-                        const mesh = this.cactusMeshes[Math.floor(Math.random() * this.cactusMeshes.length)].clone();
-                        const scale = 0.4 + Math.random() * 0.4;
-                        mesh.scale.set(scale, scale, scale);
-                        mesh.rotation.x = -Math.PI / 2;
-                        mesh.rotation.z = Math.random() * Math.PI * 2;
-                        // Position them slightly apart
-                        mesh.position.set(i * 1.0 - ((count - 1) * 0.5), 0, (Math.random() - 0.5) * 0.4);
-                        group.add(mesh);
-
-                        width = Math.max(width, 0.9 * scale + (count - 1) * 1.0);
-                        height = Math.max(height, 2.2 * scale);
-                        depth = Math.max(depth, 0.5 * scale + 0.4);
-                    }
-                }
-                
-                // Fallback if no meshes loaded yet
-                if (group.children.length === 0) {
-                    const material = new THREE.MeshStandardMaterial({
-                        color: 0x3aa73a,
-                        roughness: 0.85,
-                        flatShading: true
-                    });
-                    const scale = 1.0 + Math.random() * 0.6;
-                    group.scale.set(scale, scale, scale);
-                    width = 0.9 * scale; height = 2.2 * scale; depth = 0.5 * scale;
-                }
-
-                return { mesh: group, width, height, depth };
-            }
-            createPterodactyl() {
-                const group = new THREE.Group();
-                const material = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.8, flatShading: true });
-
-                const body = new THREE.Mesh(new THREE.ConeGeometry(0.25, 1.1, 5), material);
-                body.rotation.x = Math.PI / 2;
-                group.add(body);
-
-                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 5), material);
-                beak.rotation.x = -Math.PI / 2;
-                beak.position.set(0, 0.1, -0.6);
-                group.add(beak);
-
-                const wingGeo = new THREE.BufferGeometry();
-                wingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, -1.2,0,0.2, -0.6,0,-0.4]), 3));
-                const leftWing = new THREE.Mesh(wingGeo, material);
-                group.add(leftWing);
-
-                const rightWingGeo = new THREE.BufferGeometry();
-                rightWingGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, 0.6,0,-0.4, 1.2,0,0.2]), 3));
-                const rightWing = new THREE.Mesh(rightWingGeo, material);
-                group.add(rightWing);
-
-                return {
-                    mesh: group,
-                    leftWing: leftWing,
-                    rightWing: rightWing,
-                    width: 2.2, height: 0.5, depth: 1.0,
-                    update: (time) => {
-                        const flap = Math.sin(time * 15) * 0.65;
-                        leftWing.rotation.z = flap;
-                        rightWing.rotation.z = -flap;
-                    }
-                };
-            }
-
-            createLavaPit() {
-                const group = new THREE.Group();
-                const surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.8), new THREE.MeshBasicMaterial({ color: 0xff4500 }));
-                surface.rotation.x = -Math.PI / 2;
-                group.add(surface);
-
-                const border = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.05, 3.0), new THREE.MeshStandardMaterial({ color: 0x3d304a, roughness: 0.9 }));
-                border.position.y = -0.03;
-                group.add(border);
-
-                return { mesh: group, width: 1.8, height: 0.2, depth: 2.8 };
-            }
-
-            spawnCollectible(zPos) {
-                const group = new THREE.Group();
-                const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.35, 0), new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
-                group.add(mesh);
-
-                const pl = new THREE.PointLight(0xffaa00, 1.2, 5);
-                group.add(pl);
-
-                const y = Math.random() > 0.5 ? 2.5 : 1.0;
-                
-                let laneX = 0;
-                if (this.cameraMode !== 'side') {
-                    const lanes = [-1, 0, 1];
-                    const chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
-                    laneX = chosenLane * config.laneWidth;
-                }
-
-                group.position.set(laneX, y, zPos);
-                this.scene.add(group);
-                this.collectibles.push({ mesh: group, yBase: y, boundingBox: new THREE.Box3() });
-            }
-
-            // ==========================================
-            // 6. ENGINE MAIN GAME LOOP (TICK)
-            // ==========================================
-            tick(time, delta) {
-                const maxDelta = 0.1;
-                const dt = Math.min(delta, maxDelta);
-
-                if (this.state === GAME_STATES.RUNNING) {
-                    // AUTO-RUN MECHANICS: Dinosaur speed increases automatically over time
-                    this.speed = Math.min(config.speedMax, this.speed + config.speedAcceleration * dt);
-                    this.score += this.speed * dt * 1.5;
-                    this.dom.score.textContent = String(Math.floor(this.score)).padStart(5, '0');
-
-                    const floorScore = Math.floor(this.score);
-                    for (const milestone of [100, 500, 1000, 2000, 5000, 10000]) {
-                        if (floorScore >= milestone && !this.triggeredMilestones[milestone]) {
-                            this.triggeredMilestones[milestone] = true;
-                            this.showMilestonePopup(milestone + " PTS", "MILESTONE!");
-                            synth.playMilestone();
-                        }
-                    }
-                    if (this.highScore > 0 && floorScore > this.highScore && !this.highScoreBroken) {
-                        this.highScoreBroken = true;
-                        this.showMilestonePopup("NEW RECORD!", "HIGH SCORE!");
-                        synth.playMilestone();
-                    }
-
-                    // Update player physics (auto running moves obstacles, dino handles jump & side slides)
-                    this.updateTrexPhysics(dt);
-
-                    // Scroll infinite road segments
-                    this.scrollGround(dt);
-                    // this.scrollClouds(dt);
-
-                    // Obstacle Spawners
-                    this.handleSpawns(dt);
-
-                    // Scroll and update active obstacles
-                    this.updateObstacles(time, dt);
-                    this.updateCollectibles(time, dt);
-
-                    this.checkCollisions();
-                } else if (this.state === GAME_STATES.MENU) {
-                    // this.scrollClouds(dt);
-                }
-
-                // this.updateAshParticles(dt);
-                // this.updateDust(dt);
-                // this.updateHeatHaze(dt);
-                this.updateCameraShake(dt);
-
-                if (this.trex.mixer) {
-                    this.trex.mixer.update(dt);
-                }
-
-                // Sell speed with a widening FOV and a stronger vignette as velocity climbs
-                if (this.state === GAME_STATES.RUNNING) {
-                    const speedRatio = (this.speed - config.speedStart) / (config.speedMax - config.speedStart);
-                    const targetFov = 60 + speedRatio * 12;
-                    this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, dt * 2);
-                    this.camera.updateProjectionMatrix();
-                    if (this.dom.speedVignette) {
-                        this.dom.speedVignette.style.opacity = Math.max(0, speedRatio - 0.15) * 0.8;
-                    }
-                }
-
-                this.renderer.render(this.scene, this.camera);
-            }
-
-            updateTrexPhysics(dt) {
-                // 1. Vertical physics (Jumping)
-                if (!this.trex.isGrounded) {
-                    this.trex.velocity += config.gravity * dt;
-                    this.trex.y += this.trex.velocity * dt;
-
-                    if (this.trex.y <= 0) {
-                        const fallSpeed = Math.abs(this.trex.velocity);
-                        this.trex.y = 0;
-                        this.trex.velocity = 0;
-                        this.trex.isGrounded = true;
-                        if (this.state === GAME_STATES.RUNNING) {
-                            this.playTrexAnimation(this.trex.isDucking ? 'idle' : 'run', 0.1);
-                            // Landing impact: dust burst, squash-and-stretch, and a light shake
-                            this.emitDust(this.trex.x, 0, 0.4, 10, 1 + fallSpeed * 0.03);
-                            this.landingSquash = Math.min(1, fallSpeed / config.jumpVelocity);
-                            this.addShake(Math.min(0.35, fallSpeed / 90));
-                        }
-                    }
-                }
-
-                // 2. Horizontal physics (Lane changing slides)
-                this.trex.x = THREE.MathUtils.lerp(this.trex.x || 0, this.trex.targetX || 0, dt * 11);
-
-                // Set positions
-                if (this.trex.mesh) {
-                    this.trex.mesh.position.set(this.trex.x, this.trex.y, 0);
-                }
-
-                // Update bounding box coordinates for exact collisions
-                if (this.trex.mesh) {
-                    const scaleRatio = DINO_SCALE / 0.55;
-                    const trexHeight = 4.0 * scaleRatio;
-                    const trexWidth = 1.1 * scaleRatio;
-                    const trexDepth = 1.6 * scaleRatio;
-                    this.trex.boundingBox.setFromCenterAndSize(
-                        new THREE.Vector3(this.trex.x, this.trex.y + trexHeight/2, 0),
-                        new THREE.Vector3(trexWidth, trexHeight, trexDepth)
-                    );
-                }
-
-                // Smoothly update camera position and lookAt depending on selected view mode
-                const zoomFactor = this.cameraZoomFactor;
-
-                if (this.cameraMode === 'side') {
-                    // Side View: Camera moves slightly with the player X but stays mostly stationary on the side
-                    const targetCamX = (8.5 + this.trex.x * 0.45) * zoomFactor;
-                    const targetCamY = (2.6 + this.trex.y * 0.15) * zoomFactor;
-                    this.camera.position.set(targetCamX + this.shake.x, targetCamY + this.shake.y, -1.2 * zoomFactor);
-                    this.camera.lookAt(this.trex.x * 0.75, 1.5 * zoomFactor, -2.5);
-                } else {
-                    // 3rd Person Follow View: Camera tracks behind player
-                    this.camera.position.x = 0; // Stays centered so dinosaur moves in 3 rows on screen
-                    this.camera.position.y = 5.5 * zoomFactor + this.shake.y;
-                    this.camera.position.z = 10.5 * zoomFactor;
-                    this.camera.lookAt(0, 2.2 * zoomFactor, -4.0); // Look straight ahead down the road
-                }
-
-                // Contact shadow disabled
-
-                // Kick up trailing dust while grounded and running at speed
-                if (this.trex.isGrounded && this.state === GAME_STATES.RUNNING && this.speed > 2) {
-                    this._dustTimer = (this._dustTimer || 0) - dt;
-                    if (this._dustTimer <= 0) {
-                        this.emitDust(this.trex.x - 0.6, 0, 0.9, 2, 0.6);
-                        this._dustTimer = 0.09;
-                    }
-                }
-
-                // Keep dinosaur scale constant at DINO_SCALE under all conditions
-                if (this.trex.mesh) {
-                    this.trex.mesh.scale.set(DINO_SCALE, DINO_SCALE, DINO_SCALE);
-                }
-            }
-
-            scrollGround(dt) {
-                // Ground scroll backward relative to run speed
-                this.groundTiles.forEach(tile => {
-                    tile.mesh.position.z += this.speed * dt;
-                    if (tile.mesh.position.z > 120) {
-                        tile.mesh.position.z -= this.groundTiles.length * tile.length;
-                    }
-                });
-            }
-
-            scrollClouds(dt) {
-                this.clouds.forEach(cloud => {
-                    cloud.mesh.position.x += cloud.speed * dt * 0.2;
-                    cloud.mesh.position.z += this.speed * dt * 0.08;
-                    if (cloud.mesh.position.z > 40) {
-                        cloud.mesh.position.z = -150 - Math.random() * 50;
-                        cloud.mesh.position.x = Math.random() * 50 - 25;
-                    }
-                });
-            }
-
-            handleSpawns(dt) {
-                this.lastObstacleZ += this.speed * dt;
-                const spawnTrigger = config.spawnMinDistance + Math.random() * (config.spawnMaxDistance - config.spawnMinDistance);
-                if (this.lastObstacleZ > 0) {
-                    this.lastObstacleZ = -spawnTrigger;
-                    this.spawnObstacle();
-                }
-            }
-
-            updateObstacles(time, dt) {
-                for (let i = this.obstacles.length - 1; i >= 0; i--) {
-                    const obs = this.obstacles[i];
-                    obs.mesh.position.z += this.speed * dt; // moves towards camera (+Z)
-
-                    if (obs.update) obs.update(time);
-
-                    if (obs.mesh.position.z > 15) {
-                        this.scene.remove(obs.mesh);
-                        this.obstacles.splice(i, 1);
-                    } else {
-                        obs.boundingBox.setFromCenterAndSize(
-                            obs.mesh.position,
-                            new THREE.Vector3(obs.width, obs.height, obs.depth)
-                        );
-                    }
-                }
-            }
-
-            updateCollectibles(time, dt) {
-                for (let i = this.collectibles.length - 1; i >= 0; i--) {
-                    const col = this.collectibles[i];
-                    col.mesh.position.z += this.speed * dt;
-                    col.mesh.rotation.y = time * 3;
-                    col.mesh.position.y = col.yBase + Math.sin(time * 4) * 0.15;
-
-                    if (col.mesh.position.z > 15) {
-                        this.scene.remove(col.mesh);
-                        this.collectibles.splice(i, 1);
-                    } else {
-                        col.boundingBox.setFromCenterAndSize(col.mesh.position, new THREE.Vector3(0.7, 0.7, 0.7));
-                    }
-                }
-            }
-
-            checkCollisions() {
-                // 1. Cacti/Obstacle collisions (Damage -> Game Over)
-                for (let i = 0; i < this.obstacles.length; i++) {
-                    const obs = this.obstacles[i];
-                    if (this.trex.boundingBox.intersectsBox(obs.boundingBox)) {
-                        synth.playHit();
-                        this.addShake(1.0);
-                        this.emitDust(this.trex.x, 0.3, 0, 14, 1.6);
-                        this.transitionState(GAME_STATES.GAMEOVER);
-                        return;
-                    }
-                }
-
-                // 2. Amber Crystals collections
-                for (let i = this.collectibles.length - 1; i >= 0; i--) {
-                    const col = this.collectibles[i];
-                    if (this.trex.boundingBox.intersectsBox(col.boundingBox)) {
-                        synth.playCollect();
-                        this.amberCount++;
-                        this.score += 250;
-                        this.dom.amber.textContent = String(this.amberCount).padStart(2, '0');
-                        this.scene.remove(col.mesh);
-                        this.collectibles.splice(i, 1);
-                    }
-                }
-            }
-
-            addShake(amount) {
-                this.shake.trauma = Math.min(1, this.shake.trauma + amount);
-            }
-
-            updateCameraShake(dt) {
-                if (this.shake.trauma > 0) {
-                    this.shake.trauma = Math.max(0, this.shake.trauma - dt * 2.2);
-                    const t = this.shake.trauma * this.shake.trauma; // ease-in falloff
-                    this.shake.x = (Math.random() - 0.5) * 0.4 * t;
-                    this.shake.y = (Math.random() - 0.5) * 0.3 * t;
-                } else {
-                    this.shake.x = 0;
-                    this.shake.y = 0;
-                }
-            }
-
-            onResize() {
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-            }
-        }
-
-        // Film grain canvas animation (for movie grain overlay)
-        function initFilmGrain() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            const imgData = ctx.createImageData(canvas.width, canvas.height);
-            const data = imgData.data;
-            
-            for (let i = 0; i < data.length; i += 4) {
-                const noise = Math.random() * 255;
-                data[i] = noise;
-                data[i + 1] = noise;
-                data[i + 2] = noise;
-                data[i + 3] = 255;
-            }
-            
-            ctx.putImageData(imgData, 0, 0);
-            const dataUrl = canvas.toDataURL();
-            
-            const grainDiv = document.getElementById('film-grain');
-            if (grainDiv) {
-                grainDiv.style.backgroundImage = `url(${dataUrl})`;
-            }
-        }
-
-        // Boot Game Loop on load
-        window.addEventListener('load', () => {
-            initFilmGrain();
-            const game = new Game();
-            const clock = new THREE.Clock();
-            function loop() {
-                requestAnimationFrame(loop);
-                const delta = clock.getDelta();
-                const time = clock.getElapsedTime();
-                game.tick(time, delta);
-            }
-            loop();
+        const ids = new Set(this.videos.map(v => v.id));
+        result.list.forEach(v => {
+          if (!ids.has(v.id)) this.videos.push(v);
         });
-    </script>
+        this.pagecount = result.pagecount;
+        this.renderCategoryHub(this.selectedCat);
+      } catch (e) {
+        this.toast("Failed to load more");
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Load more";
+        }
+      } finally {
+        this.loading = false;
+      }
+    }
+
+    closeCategoryHub() {
+      this.selectedCat = null;
+      this.renderCategories();
+    }
+
+    /* HISTORY */
+    renderHistory() {
+      document.getElementById("categoryBar").style.display = "none";
+      const main = document.getElementById("mainContainer");
+      const list = this.history;
+
+      let html = `
+        <div class="section-head">
+          <h2 class="section-title">Watch History</h2>
+          ${list.length ? `<button class="ctrl-btn" onclick="app.clearHistory()">Clear</button>` : ""}
+        </div>
+      `;
+
+      if (!list.length) {
+        html += `
+          <div class="empty-box">
+            <h3>No watch history yet</h3>
+            <p>Videos you watch will be remembered locally.</p>
+            <button class="ctrl-btn solid" onclick="app.navigate('home')">Browse Feed</button>
+          </div>
+        `;
+      } else {
+        html += `<div class="history-list">
+          ${list.map(h => `
+            <div class="hist-card" onclick="app.playVideo(${h.id})">
+              <div class="hist-thumb">
+                ${h.thumbnail
+                  ? `<img src="${this.esc(h.thumbnail)}" alt="" onerror="this.style.display='none'" />`
+                  : ""}
+                <span class="badge-duration">${this.esc(h.duration || "—")}</span>
+              </div>
+              <div class="hist-info">
+                <h3 class="hist-title">${this.esc(h.title)}</h3>
+                <div class="hist-meta">${this.esc(h.category || "")} • Watched ${this.esc(h.timeAgo || "recently")}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>`;
+      }
+
+      main.innerHTML = html;
+    }
+
+    clearHistory() {
+      this.history = [];
+      localStorage.setItem("p0rn_hist", "[]");
+      this.renderHistory();
+      this.toast("History cleared");
+    }
+
+    /* ACCOUNT */
+    renderAccount() {
+      document.getElementById("categoryBar").style.display = "none";
+      const main = document.getElementById("mainContainer");
+
+      main.innerHTML = `
+        <div class="account-hub-container">
+          <div class="coming-soon-pill">COMING SOON</div>
+          <div class="avatar-ring">
+            <span class="icon">
+              <svg width="28" height="28" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </span>
+          </div>
+          <h2 class="hub-title">Account & Profile Hub</h2>
+          <p class="hub-desc">Accounts, personal playlists, watch-later and creator tools are on the way.<br>Everything you watch is already remembered locally. Powered by XVIDAPI.</p>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+              </div>
+              <div class="feature-text">
+                <h4>Custom Playlists</h4>
+                <p>Curate your own collections</p>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+              </div>
+              <div class="feature-text">
+                <h4>Resume Watching</h4>
+                <p>Pick up where you left off</p>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+              </div>
+              <div class="feature-text">
+                <h4>Likes & Saved</h4>
+                <p>Keep your favourites handy</p>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>
+              </div>
+              <div class="feature-text">
+                <h4>Themes</h4>
+                <p>Ember Night & Honey Butter</p>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;">
+            <div class="ads-toggle-row">
+              <span class="ads-toggle-label">Pre-roll ads</span>
+              <div class="switch-track ${this.adsEnabled ? "on" : ""}" onclick="app.toggleAds()">
+                <div class="switch-thumb"></div>
+              </div>
+              <span class="switch-status-text">${this.adsEnabled ? "On" : "Off"}</span>
+            </div>
+          </div>
+          <div class="hub-actions">
+            <button class="ctrl-btn solid" onclick="app.navigate('home')">
+              <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+              <span>Explore</span>
+            </button>
+            <button class="ctrl-btn" onclick="app.toggleTheme()">
+              <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg></span>
+              <span id="themeBtnText">${this.creamTheme ? "Theme: Honey Butter" : "Theme: Ember Night"}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    /* PLAYER */
+    async playVideo(id) {
+      let v = this.videos.find(x => x.id === id)
+        || this.history.find(x => x.id === id);
+
+      if (!v || !v.embed) {
+        this.showLoading("Loading video…");
+        try {
+          const data = await apiFetch({ ac: "detail", ids: String(id) });
+          if (data.list && data.list[0]) {
+            v = normalizeVideo(data.list[0]);
+          }
+        } catch (e) {
+          console.error(e);
+          this.toast("Could not load video");
+          return;
+        }
+      }
+
+      if (!v) {
+        this.toast("Video not found");
+        return;
+      }
+
+      this.activeVideo = v;
+      this._playerRelated = [];
+
+      // History
+      this.history = this.history.filter(h => h.id !== id);
+      this.history.unshift({
+        id: v.id,
+        title: v.title,
+        thumbnail: v.thumbnail || v.poster,
+        duration: v.duration,
+        category: v.category,
+        timeAgo: "Just now",
+        embed: v.embed
+      });
+      if (this.history.length > 50) this.history.pop();
+      localStorage.setItem("p0rn_hist", JSON.stringify(this.history));
+
+      this.renderPlayer(v);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      this.loadRelatedForPlayer(v);
+    }
+
+    async loadRelatedForPlayer(v) {
+      try {
+        let result;
+        if (v.typeId) {
+          result = await this.fetchVideos({ page: 1, typeId: v.typeId });
+        } else if (v.category) {
+          result = await this.fetchVideos({ page: 1, keyword: v.category });
+        } else {
+          // fallback: use words from title
+          const words = (v.title || "").split(/[\s_\-]+/).filter(w => w.length > 3).slice(0, 2).join(" ");
+          result = await this.fetchVideos({ page: 1, keyword: words || "hot" });
+        }
+        const related = (result.list || []).filter(x => x.id !== v.id).slice(0, 12);
+        this._playerRelated = related;
+        const box = document.getElementById("upNextList");
+        if (!box) return;
+        if (!related.length) {
+          box.innerHTML = `<p style="color:var(--cream-dim);font-size:13px;">No related videos found.</p>`;
+          return;
+        }
+        box.innerHTML = related.map(r => `
+          <div class="up-card" onclick="app.playVideo(${r.id})">
+            <div class="up-thumb">
+              ${r.thumbnail
+                ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+                : ""}
+              <span class="badge-duration" style="font-size:9.5px;padding:2px 4px;">${this.esc(r.duration)}</span>
+            </div>
+            <div class="up-info">
+              <div class="up-t">${this.esc(r.title)}</div>
+              <div class="up-m">${this.esc(r.category)} • ${this.esc(r.duration)}</div>
+            </div>
+          </div>
+        `).join("");
+      } catch (e) {
+        console.warn("related fail", e);
+      }
+    }
+
+    renderPlayer(v) {
+      document.getElementById("categoryBar").style.display = "none";
+      const main = document.getElementById("mainContainer");
+
+      // Placeholder until related loads; show same-list as instant fallback
+      const related = (this._playerRelated || this.videos.filter(x => x.id !== v.id)).slice(0, 8);
+      const backLabel = this.selectedCat
+        ? this.selectedCat.name
+        : (this.tab === "category" ? "Category" : "Feed");
+
+      const embedUrl = v.embed || "";
+      /* Show exactly what API/embed gives. No skip-ad UI from us. */
+      const playerHtml = embedUrl
+        ? `<iframe
+              src="${this.esc(embedUrl)}"
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+              allowfullscreen
+              referrerpolicy="origin"
+              loading="eager"
+              title="${this.esc(v.title)}"
+            ></iframe>`
+        : `<div class="player-fallback">
+             <p>No playable link for this video.</p>
+           </div>`;
+
+      main.innerHTML = `
+        <div class="player-wrap">
+          <div class="player-top-bar">
+            <button class="ctrl-btn" onclick="app.closePlayer()">
+              <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></span>
+              <span>Back to ${this.esc(backLabel)}</span>
+            </button>
+          </div>
+
+          <div class="player-layout">
+            <div>
+              <div class="video-screen-box">
+                ${playerHtml}
+              </div>
+
+              <h1 class="watch-title">${this.esc(v.title)}</h1>
+
+              <div class="watch-meta-row">
+                <div class="watch-stats">
+                  <span>${this.esc(v.quality || v.views || "HD")}</span>
+                  <span> • </span>
+                  <span>${this.esc(v.duration)}</span>
+                  <span> • </span>
+                  <span>${this.esc(v.ago)}</span>
+                  <span> • </span>
+                  <span>${this.esc(v.category)}</span>
+                  ${v.actors && v.actors.length
+                    ? ` • <span>${this.esc(v.actors.slice(0, 3).join(", "))}</span>`
+                    : ""}
+                </div>
+
+                <div class="player-actions">
+                  <button class="action-pill ${this.isLiked(v.id) ? "liked" : ""}" id="likeBtn" onclick="app.toggleLike(${v.id})">
+                    <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+                    <span class="like-label">${this.isLiked(v.id) ? "Liked" : "Like"}</span>
+                  </button>
+                  <div class="action-pill ads-pill">
+                    <span class="ads-toggle-label">Ads</span>
+                    <div class="switch-track ${this.adsEnabled ? "on" : ""}" onclick="app.toggleAdsFromPlayer()">
+                      <div class="switch-thumb"></div>
+                    </div>
+                    <span class="switch-status-text" id="playerAdsStatus">${this.adsEnabled ? "On" : "Off"}</span>
+                  </div>
+                  <button class="action-pill" onclick="app.toggleThemeFromPlayer()" title="Theme (5s lock)">
+                    <span class="icon" id="playerThemeIcon">
+                      ${this.creamTheme
+                        ? '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg>'
+                        : '<svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"/></svg>'}
+                    </span>
+                    <span>Theme</span>
+                  </button>
+                  <button class="action-pill solid" onclick="app.shareVideo(${v.id})">
+                    <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></span>
+                    <span>Share</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="up-next-title">Related for you</div>
+              <div class="up-next-list" id="upNextList">
+                ${related.length
+                  ? related.map(r => `
+                    <div class="up-card" onclick="app.playVideo(${r.id})">
+                      <div class="up-thumb">
+                        ${r.thumbnail
+                          ? `<img src="${this.esc(r.thumbnail)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" />`
+                          : ""}
+                        <span class="badge-duration" style="font-size:9.5px;padding:2px 4px;">${this.esc(r.duration)}</span>
+                      </div>
+                      <div class="up-info">
+                        <div class="up-t">${this.esc(r.title)}</div>
+                        <div class="up-m">${this.esc(r.category)} • ${this.esc(r.duration)}</div>
+                      </div>
+                    </div>
+                  `).join("")
+                  : `<p style="color:var(--cream-dim);font-size:13px;">No related videos loaded.</p>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    shareVideo(id) {
+      const v = this.videos.find(x => x.id === id) || this.activeVideo;
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: v ? v.title : "p0rn",
+          url: url
+        }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url);
+        this.toast("Link copied to clipboard");
+      } else {
+        this.toast("URL: " + url);
+      }
+    }
+
+    closePlayer() {
+      this.activeVideo = null;
+      if (this.selectedCat) {
+        this.renderCategoryHub(this.selectedCat);
+      } else {
+        this.navigate(this.tab);
+      }
+    }
+
+    esc(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  }
+
+  let app;
+  document.addEventListener("DOMContentLoaded", () => {
+    app = new P0rnApp();
+    window.app = app;
+  });
+  </script>
 </body>
 </html>
