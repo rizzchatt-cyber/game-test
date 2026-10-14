@@ -4,6 +4,9 @@
   <!-- Site Verification -->
   <meta name="6a97888e-site-verification" content="1806806bd92c274d5b7d2df57a9074ac" />
 
+  <!-- Client Hints Meta Tag for Ad Server (ExoClick / magsrv / pemsrv) -->
+  <meta http-equiv="Delegate-CH" content="Sec-CH-UA https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Mobile https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Arch https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Model https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Platform https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Platform-Version https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Bitness https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Full-Version-List https://s.magsrv.com https://s.pemsrv.com; Sec-CH-UA-Full-Version https://s.magsrv.com https://s.pemsrv.com;">
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-RJBZXLR82G"></script>
   <script>
@@ -17,14 +20,18 @@
   <!-- Background Ad & External Link Blocker Shield -->
   <script>
     (function() {
-      // 1. Strictly disallow any foreign ad popups or new windows
+      // 1. Strictly disallow any foreign ad popups or new windows (allow internal & user-authorized ads)
       var _origOpen = window.open;
       window.open = function(url, target, features) {
         if (typeof url === "string") {
           var isInternal = url.startsWith("/") || url.startsWith("?") || url.startsWith("#") || url.startsWith(window.location.origin) || url.startsWith("https://p0rn.online");
-          if (isInternal) {
+          var isUserAd = url.includes("magsrv.com") || url.includes("pemsrv.com") || url.includes("syndication") || url.includes("exoclick");
+          if (isInternal || isUserAd) {
             return _origOpen ? _origOpen.call(window, url, target, features) : null;
           }
+        }
+        if (window.event && window.event.target && window.event.target.closest && window.event.target.closest("[class*='eas6a97888e'], [data-zoneid]")) {
+          return _origOpen ? _origOpen.call(window, url, target, features) : null;
         }
         console.warn("[p0rn Shield] Blocked external popup attempt:", url);
         return null;
@@ -32,12 +39,16 @@
 
       // 2. Global Click Blocker: Block any clicks to unapproved external ad destinations
       document.addEventListener("click", function(e) {
+        if (e.target && e.target.closest && e.target.closest("[class*='eas6a97888e'], [data-zoneid]")) {
+          return; // Authorized publisher ad zones
+        }
         var a = e.target && e.target.closest ? e.target.closest("a") : null;
         if (a) {
           var href = a.getAttribute("href") || "";
           if (href && !href.startsWith("#") && !href.startsWith("javascript:")) {
             var isInternal = href.startsWith("/") || href.startsWith("?") || href.startsWith(window.location.origin) || href.startsWith("https://p0rn.online");
-            if (!isInternal) {
+            var isUserAd = href.includes("magsrv.com") || href.includes("pemsrv.com") || href.includes("syndication") || href.includes("exoclick");
+            if (!isInternal && !isUserAd) {
               e.preventDefault();
               e.stopPropagation();
               e.stopImmediatePropagation();
@@ -48,9 +59,12 @@
         }
       }, true);
 
-      // 3. Anti-Popunder Focus Keeper: Keep user on website if an ad tries to background-tab
+      // 3. Anti-Popunder Focus Keeper: Keep user on website if an unapproved ad tries to background-tab
       var _blurTimer = null;
       window.addEventListener("blur", function() {
+        if (document.activeElement && document.activeElement.closest && document.activeElement.closest(".eas6a97888e6, [data-zoneid]")) {
+          return;
+        }
         _blurTimer = setTimeout(function() {
           try { window.focus(); } catch(_) {}
         }, 80);
@@ -921,8 +935,10 @@
 
 
     .player-wrap {
-      max-width: 1200px;
+      width: 100%;
+      max-width: 1360px;
       margin: 0 auto;
+      box-sizing: border-box;
     }
     .player-top-bar {
       display: flex;
@@ -932,8 +948,21 @@
     }
     .player-layout {
       display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 24px;
+      width: 100%;
+      box-sizing: border-box;
+      align-items: start;
+    }
+    .player-main-col {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .player-side-col {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
     .video-screen-box {
       position: relative;
@@ -1134,17 +1163,20 @@
     }
     .up-card {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       cursor: pointer;
       border-radius: 8px;
-      padding: 4px;
+      padding: 6px;
       transition: background 0.15s;
       text-decoration: none;
       color: inherit;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     }
     .up-card:hover { background: var(--bg-card-hover); }
     .up-thumb {
-      width: 110px;
+      width: 120px;
       aspect-ratio: 16/9;
       border-radius: 6px;
       overflow: hidden;
@@ -1159,6 +1191,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      overflow: hidden;
     }
     .up-t {
       font-size: 12.5px;
@@ -1169,11 +1202,15 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       color: var(--cream);
+      word-break: break-word;
     }
     .up-m {
       font-size: 11px;
       color: var(--cream-dim);
-      margin-top: 2px;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .history-list {
@@ -1369,16 +1406,25 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: calc(var(--bottom-h) + var(--safe-bottom));
+      height: calc(56px + var(--safe-bottom));
       padding-bottom: var(--safe-bottom);
-      background: var(--bg);
+      background: rgba(26, 18, 16, 0.94);
       border-top: 1px solid var(--border);
       display: none;
       align-items: center;
       justify-content: space-around;
-      z-index: 240;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      z-index: 999;
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 0 -4px 22px rgba(0, 0, 0, 0.4);
+      contain: layout size;
+      transform: translateZ(0);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body.cream-theme .bottom-nav {
+      background: rgba(244, 213, 154, 0.96);
+      box-shadow: 0 -4px 22px rgba(139, 46, 26, 0.12);
     }
     .bottom-item {
       flex: 1;
@@ -1386,23 +1432,56 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
+      height: 56px;
       background: transparent;
       border: none;
-      color: var(--cream-dim);
+      color: var(--cream-sub);
       cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.15px;
       gap: 3px;
-      transition: color 0.15s;
+      transition: color 0.15s ease, transform 0.12s ease;
       font-family: inherit;
+      position: relative;
+      touch-action: manipulation;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bottom-item .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 24px;
+      transition: transform 0.15s ease;
+    }
+    .bottom-item .icon svg {
+      width: 21px;
+      height: 21px;
+      display: block;
+    }
+    .bottom-item:active {
+      transform: scale(0.92);
+      opacity: 0.85;
     }
     .bottom-item.active {
       color: var(--cream);
-      font-weight: 800;
+      font-weight: 700;
     }
     .bottom-item.active .icon {
-      transform: scale(1.12);
+      transform: translateY(-1px);
+    }
+    /* Native App Active Indicator Dot */
+    .bottom-item.active::after {
+      content: "";
+      position: absolute;
+      bottom: 5px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--cream);
+      box-shadow: 0 0 6px var(--cream);
     }
 
     .empty-box {
@@ -1473,10 +1552,16 @@
       to { transform: translate(-50%, 0); opacity: 1; }
     }
 
+    @media (max-width: 1080px) {
+      .player-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
     @media (max-width: 860px) {
       .desktop-nav { display: none; }
       .bottom-nav { display: flex; }
-      .player-layout { grid-template-columns: 1fr; }
     }
 
 
@@ -1620,19 +1705,21 @@
         flex-shrink: 0;
       }
       .bottom-nav {
-        height: 52px;
+        display: flex;
+        height: calc(56px + var(--safe-bottom));
+        padding-bottom: var(--safe-bottom);
       }
       .bottom-item {
-        font-size: 9.5px;
-        padding: 4px 0;
-        gap: 2px;
+        font-size: 10.5px;
+        padding: 0;
+        gap: 3px;
       }
       .bottom-item .icon svg {
-        width: 17px;
-        height: 17px;
+        width: 21px;
+        height: 21px;
       }
       .main-wrap {
-        padding: 10px 8px calc(var(--bottom-h) + var(--safe-bottom) + 10px);
+        padding: 8px 8px calc(68px + var(--safe-bottom)) !important;
       }
       .category-bar {
         padding: 6px 0;
@@ -1824,6 +1911,15 @@
   </style>
 </head>
 <body>
+  <!-- AdProvider: Instant Message Popup (Zone: 6055014) -->
+  <script async type="application/javascript" src="https://a.magsrv.com/ad-provider.js"></script> 
+  <ins class="eas6a97888e6" data-zoneid="6055014"></ins> 
+  <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
+
+  <!-- AdProvider: Zone 6055016 (pemsrv) -->
+  <script async type="application/javascript" src="https://a.pemsrv.com/ad-provider.js"></script> 
+  <ins class="eas6a97888e35" data-zoneid="6055016"></ins> 
+  <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
 
   <header class="header">
     <div class="brand-wrap" onclick="app.navigate('home')">
@@ -2315,22 +2411,22 @@
         {
           id: "home",
           label: "Home",
-          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
+          icon: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
         },
         {
           id: "category",
           label: "Collections",
-          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>'
+          icon: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>'
         },
         {
           id: "history",
           label: "History",
-          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>'
+          icon: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>'
         },
         {
           id: "account",
           label: "Account",
-          icon: '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
+          icon: '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
         }
       ];
 
@@ -3389,10 +3485,20 @@
     /* PLAYER */
     async playVideo(id, updateUrl = true) {
       let v = this.videos.find(x => String(x.id) === String(id))
+        || (this._playerRelated && this._playerRelated.find(x => String(x.id) === String(id)))
         || this.history.find(x => String(x.id) === String(id));
 
+      const isPlayerAlreadyOpen = Boolean(document.getElementById("playerScreenBox"));
+
       if (!v || !v.embed) {
-        this.showLoading("Loading video…");
+        if (isPlayerAlreadyOpen) {
+          const screenBox = document.getElementById("playerScreenBox");
+          if (screenBox) {
+            screenBox.innerHTML = `<div class="player-fallback"><div class="spinner"></div><p>Loading video…</p></div>`;
+          }
+        } else {
+          this.showLoading("Loading video…");
+        }
         try {
           const data = await apiFetch({ ac: "detail", ids: String(id) });
           if (data.list && data.list[0]) {
@@ -3414,7 +3520,6 @@
         this._savedScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
       }
       this.activeVideo = v;
-      this._playerRelated = [];
 
       // History
       this.history = this.history.filter(h => String(h.id) !== String(id));
@@ -3440,9 +3545,102 @@
       }
       this.updateMetadata(v);
 
-      this.renderPlayer(v);
+      if (isPlayerAlreadyOpen && document.getElementById("playerIframe")) {
+        this.updatePlayerInPlace(v);
+      } else {
+        this.renderPlayer(v);
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
       this.loadRelatedForPlayer(v);
+    }
+
+    updatePlayerInPlace(v) {
+      const themedEmbedUrl = this.buildThemedEmbedUrl(v.embed);
+      const screenBox = document.getElementById("playerScreenBox");
+      const existingIframe = document.getElementById("playerIframe");
+
+      if (existingIframe && themedEmbedUrl) {
+        existingIframe.src = themedEmbedUrl;
+        existingIframe.title = v.title || "";
+      } else if (screenBox) {
+        screenBox.innerHTML = themedEmbedUrl
+          ? `<iframe
+                id="playerIframe"
+                src="${this.esc(themedEmbedUrl)}"
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                allowfullscreen
+                referrerpolicy="origin"
+                loading="eager"
+                title="${this.esc(v.title)}"
+              ></iframe>`
+          : `<div class="player-fallback"><p>No playable link for this video.</p></div>`;
+      }
+
+      const watchTitle = document.getElementById("watchTitle");
+      if (watchTitle) {
+        watchTitle.textContent = v.title;
+        watchTitle.title = v.title;
+        watchTitle.classList.add("single-line");
+      }
+
+      const moreBtn = document.getElementById("watchMoreBtn");
+      if (moreBtn) moreBtn.style.display = "inline-block";
+
+      const expCard = document.getElementById("watchExpandedCard");
+      if (expCard) {
+        expCard.style.display = "none";
+        expCard.innerHTML = `
+          <div class="expanded-full-title">${this.esc(v.title)}</div>
+          <div class="expanded-chips-row">
+            <span class="exp-chip">📁 ${this.esc(v.category)}</span>
+            <span class="exp-chip">⏱ ${this.esc(v.duration)}</span>
+            <span class="exp-chip">👁 ${this.esc(v.quality || v.views || "HD")}</span>
+            <span class="exp-chip">📅 ${this.esc(v.ago)}</span>
+          </div>
+          ${v.actors && v.actors.length ? `<div class="expanded-actors"><b>Cast:</b> ${this.esc(v.actors.join(", "))}</div>` : ""}
+          <button class="watch-less-btn" onclick="app.toggleWatchMore()" type="button">Show less ▴</button>
+        `;
+      }
+
+      const statsEl = document.querySelector(".watch-stats");
+      if (statsEl) {
+        statsEl.innerHTML = `
+          <span>${this.esc(v.quality || v.views || "HD")}</span>
+          <span> • </span>
+          <span>${this.esc(v.duration)}</span>
+          <span> • </span>
+          <span>${this.esc(v.ago)}</span>
+          <span> • </span>
+          <span>${this.esc(v.category)}</span>
+        `;
+      }
+
+      const likeBtn = document.getElementById("likeBtn");
+      if (likeBtn) {
+        const liked = this.isLiked(v.id);
+        likeBtn.className = `action-pill ${liked ? "liked" : ""}`;
+        likeBtn.setAttribute("onclick", `app.toggleLike(${v.id})`);
+        const label = likeBtn.querySelector(".like-label");
+        if (label) label.textContent = liked ? "Liked" : "Like";
+      }
+
+      const shareBtn = document.querySelector(".player-actions .action-pill.solid");
+      if (shareBtn) {
+        shareBtn.setAttribute("onclick", `app.shareVideo(${v.id})`);
+      }
+
+      const backBtn = document.querySelector(".player-back-btn span:last-child");
+      if (backBtn) {
+        const backLabel = this.selectedCat
+          ? `${this.selectedCat.name} Collection`
+          : (this.tab === "category" ? "Collections" : "Feed");
+        backBtn.textContent = `Back to ${backLabel}`;
+      }
+
+      const upNextList = document.getElementById("upNextList");
+      if (upNextList) {
+        upNextList.style.opacity = "0.5";
+      }
     }
 
     async loadRelatedForPlayer(v) {
@@ -3457,10 +3655,11 @@
           const words = (v.title || "").split(/[\s_\-]+/).filter(w => w.length > 3).slice(0, 2).join(" ");
           result = await this.fetchVideos({ page: 1, keyword: words || "hot" });
         }
-        const related = (result.list || []).filter(x => x.id !== v.id).slice(0, 12);
+        const related = (result.list || []).filter(x => String(x.id) !== String(v.id)).slice(0, 12);
         this._playerRelated = related;
         const box = document.getElementById("upNextList");
         if (!box) return;
+        box.style.opacity = "1";
         if (!related.length) {
           box.innerHTML = `<p style="color:var(--cream-dim);font-size:13px;">No related videos found.</p>`;
           return;
@@ -3481,6 +3680,8 @@
         `).join("");
       } catch (e) {
         console.warn("related fail", e);
+        const box = document.getElementById("upNextList");
+        if (box) box.style.opacity = "1";
       }
     }
 
@@ -3504,7 +3705,10 @@
       document.getElementById("categoryBar").style.display = "none";
       const main = document.getElementById("mainContainer");
 
-      const related = (this._playerRelated || this.videos.filter(x => x.id !== v.id)).slice(0, 8);
+      const related = (this._playerRelated && this._playerRelated.length
+        ? this._playerRelated
+        : this.videos.filter(x => String(x.id) !== String(v.id))
+      ).slice(0, 8);
       const backLabel = this.selectedCat
         ? `${this.selectedCat.name} Collection`
         : (this.tab === "category" ? "Collections" : "Feed");
@@ -3535,7 +3739,7 @@
           </div>
 
           <div class="player-layout">
-            <div>
+            <div class="player-main-col">
               <div class="video-screen-box" id="playerScreenBox">
                 ${playerEmbedHtml}
               </div>
@@ -3591,7 +3795,7 @@
               </div>
             </div>
 
-            <div>
+            <div class="player-side-col">
               <div class="up-next-title">Related for you</div>
               <div class="up-next-list" id="upNextList">
                 ${related.length
