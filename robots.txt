@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://p0rn.online/sitemap.xml
+Sitemap: https://p0rn.online/sitemap-collections.xml
